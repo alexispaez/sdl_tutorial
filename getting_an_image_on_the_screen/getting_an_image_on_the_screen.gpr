@@ -1,0 +1,23 @@
+with "config/getting_an_image_on_the_screen_config.gpr";
+project Getting_An_Image_On_The_Screen is
+
+   for Source_Dirs use ("src/", "config/");
+   for Object_Dir use "obj/" & Getting_An_Image_On_The_Screen_Config.Build_Profile;
+   for Create_Missing_Dirs use "True";
+   for Exec_Dir use "bin";
+   for Main use ("getting_an_image_on_the_screen.adb");
+
+   package Compiler is
+      for Default_Switches ("Ada") use Getting_An_Image_On_The_Screen_Config.Ada_Compiler_Switches &
+         ("-gnat2022", "-gnatyM120");
+   end Compiler;
+
+   package Binder is
+      for Switches ("Ada") use ("-Es"); --  Symbolic traceback
+   end Binder;
+
+   package Install is
+      for Artifacts (".") use ("share");
+   end Install;
+
+end Getting_An_Image_On_The_Screen;

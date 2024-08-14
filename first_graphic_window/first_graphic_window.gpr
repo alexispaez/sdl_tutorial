@@ -1,0 +1,23 @@
+with "config/first_graphic_window_config.gpr";
+project First_Graphic_Window is
+
+   for Source_Dirs use ("src/", "config/");
+   for Object_Dir use "obj/" & First_Graphic_Window_Config.Build_Profile;
+   for Create_Missing_Dirs use "True";
+   for Exec_Dir use "bin";
+   for Main use ("first_graphic_window.adb");
+
+   package Compiler is
+      for Default_Switches ("Ada") use First_Graphic_Window_Config.Ada_Compiler_Switches &
+         ("-gnat2022", "-gnatyM120");
+   end Compiler;
+
+   package Binder is
+      for Switches ("Ada") use ("-Es"); --  Symbolic traceback
+   end Binder;
+
+   package Install is
+      for Artifacts (".") use ("share");
+   end Install;
+
+end First_Graphic_Window;

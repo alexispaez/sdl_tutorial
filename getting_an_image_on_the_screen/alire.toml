@@ -1,0 +1,18 @@
+name = "getting_an_image_on_the_screen"
+description = "Tutorial on displaying an image using SDL"
+version = "0.1.0-dev"
+
+authors = ["Jose Alexis"]
+maintainers = ["Jose Alexis <jose.alexis.paez.thurgood@gmail.com>"]
+maintainers-logins = ["alexispaez"]
+licenses = "MIT OR Apache-2.0 WITH LLVM-exception"
+website = ""
+tags = ["sdl", "sdlada", "imageonscreen"]
+
+executables = ["getting_an_image_on_the_screen"]
+
+[[depends-on]]
+sdlada = "^2.5.124"
+
+[[pins]]
+sdlada = { path='../sdlada' }
