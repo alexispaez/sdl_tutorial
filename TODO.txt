@@ -1,0 +1,20 @@
+TODO in SDL_Tutorial:
+
+$ alr with sdlada --use=https://github.com/ada-game-framework/sdlada_mixer.git
+$ alr with sdlada --use=../sdlada
+$ alr with sdlada_mixer --use=https://github.com/ada-game-framework/sdlada_mixer.git
+$ alr with sdlada_image --use=https://github.com/ada-game-framework/sdlada_image.git
+$ alr with sdlada_ttf --use=https://github.com/ada-game-framework/sdlada_ttf.git
+
+Add to .gpr file
+   package Compiler is
+      for Default_Switches ("Ada") use First_Graphic_Window_Config.Ada_Compiler_Switches &
+         ("-gnat2022", "-gnatyM120");
+   end Compiler;
+
+Refactor to use a Load_Media routine.
+Create a README file for the repo.
+Commit the repo at some point.
+Start a game project.
+
+

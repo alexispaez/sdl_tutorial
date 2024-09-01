@@ -1,0 +1,23 @@
+with "config/clip_rendering_and_sprite_sheets_config.gpr";
+project Clip_Rendering_And_Sprite_Sheets is
+
+   for Source_Dirs use ("src/", "config/");
+   for Object_Dir use "obj/" & Clip_Rendering_And_Sprite_Sheets_Config.Build_Profile;
+   for Create_Missing_Dirs use "True";
+   for Exec_Dir use "bin";
+   for Main use ("clip_rendering_and_sprite_sheets.adb");
+
+   package Compiler is
+      for Default_Switches ("Ada") use Clip_Rendering_And_Sprite_Sheets_Config.Ada_Compiler_Switches &
+         ("-gnat2022", "-gnatyM120");
+   end Compiler;
+
+   package Binder is
+      for Switches ("Ada") use ("-Es"); --  Symbolic traceback
+   end Binder;
+
+   package Install is
+      for Artifacts (".") use ("share");
+   end Install;
+
+end Clip_Rendering_And_Sprite_Sheets;

@@ -1,0 +1,23 @@
+with "config/color_modulation_config.gpr";
+project Color_Modulation is
+
+   for Source_Dirs use ("src/", "config/");
+   for Object_Dir use "obj/" & Color_Modulation_Config.Build_Profile;
+   for Create_Missing_Dirs use "True";
+   for Exec_Dir use "bin";
+   for Main use ("color_modulation.adb");
+
+   package Compiler is
+      for Default_Switches ("Ada") use Color_Modulation_Config.Ada_Compiler_Switches &
+         ("-gnat2022", "-gnatyM120");
+   end Compiler;
+
+   package Binder is
+      for Switches ("Ada") use ("-Es"); --  Symbolic traceback
+   end Binder;
+
+   package Install is
+      for Artifacts (".") use ("share");
+   end Install;
+
+end Color_Modulation;

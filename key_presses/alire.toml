@@ -1,15 +1,15 @@
-name = "getting_an_image_on_the_screen"
-description = "Tutorial on displaying an image using SDL"
+name = "key_presses"
+description = "Control key presses with sdlada"
 version = "0.1.0-dev"
 
-authors = ["Jose Alexis"]
-maintainers = ["Jose Alexis <jose.alexis.paez.thurgood@gmail.com>"]
+authors = ["Jose Alexis Paez"]
+maintainers = ["Jose Alexis Paez <jose.alexis.paez.thurgood@gmail.com>"]
 maintainers-logins = ["alexispaez"]
 licenses = "MIT OR Apache-2.0 WITH LLVM-exception"
 website = ""
-tags = ["sdl", "sdlada", "imageonscreen"]
+tags = []
 
-executables = ["getting_an_image_on_the_screen"]
+executables = ["key_presses"]
 
 [[depends-on]]
 sdlada_mixer = "^2.5.22"
@@ -30,4 +30,4 @@ sdlada_ttf = "~0.1.0-dev"
 sdlada_ttf = { url='https://github.com/ada-game-framework/sdlada_ttf.git' }
 
 [[pins]]
-sdlada = { url='https://github.com/alexispaez/sdlada.git' }
+sdlada = { path='../sdlada' }

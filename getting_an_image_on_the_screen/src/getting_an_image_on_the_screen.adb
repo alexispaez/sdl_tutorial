@@ -1,5 +1,6 @@
 with Ada.Text_IO;
 with SDL.Events.Events;
+with SDL.Events.Keyboards;
 with SDL.Video.Surfaces;
 with SDL.Video.Surfaces.Makers;
 with SDL.Video.Windows.Makers;
@@ -14,14 +15,24 @@ procedure Getting_An_Image_On_The_Screen is
    Hello_World_Image : SDL.Video.Surfaces.Surface;
 
    procedure Wait is
-      use type SDL.Events.Event_Types;
+      Finished : Boolean := False;
    begin
       loop
          while SDL.Events.Events.Poll (Event) loop
-            if Event.Common.Event_Type = SDL.Events.Quit then
-               return;
-            end if;
+            case Event.Common.Event_Type is
+               when SDL.Events.Quit =>
+                  Finished := True;
+               when SDL.Events.Keyboards.Key_Up =>
+                  case Event.Keyboard.Key_Sym.Key_Code is
+                     when SDL.Events.Keyboards.Code_Escape =>
+                        Finished := True;
+                     when others => null;
+                  end case;
+               when others => null;
+            end case;
          end loop;
+
+         exit when Finished;
       end loop;
    end Wait;
 begin
