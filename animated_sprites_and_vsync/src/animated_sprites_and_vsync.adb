@@ -15,12 +15,12 @@ with SDL.Video.Surfaces;
 with SDL.Video.Textures;
 with SDL.Video.Textures.Makers;
 with SDL.Video.Windows.Makers;
-with Interfaces.C;
+with Interfaces.C; use Interfaces.C;
 
 procedure Animated_Sprites_And_Vsync is
 
    package UTF_Strings renames Ada.Strings.UTF_Encoding;
-   type Sprite_Clip_Array is array (1 .. 4) of SDL.Video.Rectangles.Rectangle;
+   type Sprite_Clip_Array is array (Positive range <>) of SDL.Video.Rectangles.Rectangle;
 
    Width  : constant := 640;
    Height : constant := 480;
@@ -28,7 +28,8 @@ procedure Animated_Sprites_And_Vsync is
    Window               : SDL.Video.Windows.Window;
    Event                : SDL.Events.Events.Events;
    Sprite_Sheet_Texture : SDL.Video.Textures.Texture;
-   Sprite_Clips         : Sprite_Clip_Array;
+   Sprite_Frames        : constant Positive := 8;
+   Sprite_Clips         : Sprite_Clip_Array (1 .. Sprite_Frames);
    Renderer             : SDL.Video.Renderers.Renderer;
 
    procedure Load_Texture
@@ -39,7 +40,10 @@ procedure Animated_Sprites_And_Vsync is
    begin
       SDL.Images.IO.Create (Loaded_Surface, File_Name);
 
-      Loaded_Surface.Set_Colour_Key ((0, 255, 255, 255), True);
+      Loaded_Surface.Set_Colour_Key ((Red => 0,
+                                      Green => 255,
+                                      Blue  => 255,
+                                      Alpha => 0), True);
 
       SDL.Video.Textures.Makers.Create
         (Texture,
@@ -53,12 +57,28 @@ procedure Animated_Sprites_And_Vsync is
    begin
       Load_Texture (Sprite_Sheet_Texture,
                     Renderer,
-                    "../resources/animated_foo.png");
+                    "../resources/animated_2.png");
+                    --  "../resources/animated_foo.png");
       --  Set sprite positions
-      Sprite_Clips (1) := (0, 0, 64, 205);
-      Sprite_Clips (2) := (64, 0, 64, 205);
-      Sprite_Clips (3) := (128, 0, 64, 205);
-      Sprite_Clips (4) := (192, 0, 64, 205);
+      declare
+         I : Natural := 0;
+      begin
+         for S in Sprite_Clips'First .. Sprite_Clips'Last loop
+            declare
+               X_Coordinate : constant SDL.Coordinate := SDL.Coordinate (I);
+            begin
+               Sprite_Clips (S) :=
+                 (X_Coordinate,
+                  0,
+                  64,
+                  200);
+               I := @ + 64;
+            end;
+         end loop;
+      end;
+      --  Sprite_Clips (2) := (64, 0, 64, 205);
+      --  Sprite_Clips (3) := (128, 0, 64, 205);
+      --  Sprite_Clips (4) := (192, 0, 64, 205);
    end Load_Media;
 
    procedure Render_Texture
@@ -79,11 +99,9 @@ procedure Animated_Sprites_And_Vsync is
    procedure Handle_Events is
       Finished : Boolean := False;
       Frame    : Integer := 1;
-      Animation_Frames : constant := 4;
-      Slow_Down_Factor : constant := 4;
+      Animation_Frames : constant := Sprite_Frames;
+      Slow_Down_Factor : constant := Sprite_Frames;
       Current_Clip : SDL.Video.Rectangles.Rectangle;
-
-      use type Interfaces.C.int;
    begin
       loop
          while SDL.Events.Events.Poll (Event) loop
@@ -138,12 +156,12 @@ begin
       Position => SDL.Natural_Coordinates'(X => 20, Y => 20),
       Size     => SDL.Positive_Sizes'(Width, Height),
       Flags    => 0);
+
    SDL.Video.Renderers.Makers.Create
      (Window => Window,
       Rend   => Renderer,
-      Flags  =>
-        SDL.Video.Renderers.Accelerated or
-          SDL.Video.Renderers.Present_V_Sync);
+      Flags  => SDL.Video.Renderers.Accelerated or
+        SDL.Video.Renderers.Present_V_Sync);
 
    Renderer.Set_Draw_Colour ((others => 255));
 

@@ -2,13 +2,15 @@ pragma Ada_2022;
 
 with Ada.Strings.UTF_Encoding;
 with Ada.Text_IO;
-with SDL;
+with SDL; use SDL;
 with SDL.Events.Events;
 with SDL.Events.Keyboards;
+with SDL.Hints;
 with SDL.Images;
 with SDL.Images.IO;
+with SDL.Inputs.Joysticks; use SDL.Inputs.Joysticks;
 with SDL.Video.Rectangles;
-with SDL.Video.Renderers;
+with SDL.Video.Renderers; use SDL.Video.Renderers;
 with SDL.Video.Renderers.Makers;
 with SDL.Video.Surfaces;
 with SDL.Video.Textures;
@@ -16,17 +18,20 @@ with SDL.Video.Textures.Makers;
 with SDL.Video.Windows.Makers;
 with Interfaces.C;
 
-procedure Rotation_And_Flipping is
+procedure Gamepads_And_Joysticks is
 
    package UTF_Strings renames Ada.Strings.UTF_Encoding;
 
    Width  : constant := 640;
    Height : constant := 480;
 
+   Joystick_Dead_Zone : constant := 8000;
+
    Window        : SDL.Video.Windows.Window;
    Renderer      : SDL.Video.Renderers.Renderer;
    Event         : SDL.Events.Events.Events;
    Arrow_Texture : SDL.Video.Textures.Texture;
+   Joystick      : SDL.Inputs.Joysticks.Joystick;
 
    procedure Load_Media
      (Texture   : in out SDL.Video.Textures.Texture;
@@ -57,11 +62,6 @@ procedure Rotation_And_Flipping is
 
       use type Interfaces.C.int;
 
-      From_Rectangle : constant SDL.Video.Rectangles.Rectangle :=
-        (0,
-         0,
-         Texture.Get_Size.Width,
-         Texture.Get_Size.Height);
       To_Rectangle : constant SDL.Video.Rectangles.Rectangle :=
         (X,
          Y,
@@ -71,8 +71,7 @@ procedure Rotation_And_Flipping is
         (Texture.Get_Size.Width / 2,
          Texture.Get_Size.Height / 2);
    begin
-      Renderer.Copy_to (Texture,
-                     --  From_Rectangle,
+      Renderer.Copy_To (Texture,
                      To_Rectangle,
                      Angle,
                      Center_Point,
@@ -131,7 +130,16 @@ procedure Rotation_And_Flipping is
    end Handle_Events;
 
 begin
-   if not SDL.Initialise (Flags => SDL.Enable_Screen) then
+   if not SDL.Initialise (Flags => SDL.Enable_Screen or
+                            SDL.Enable_Joystick)
+   then
+      return;
+   end if;
+
+   SDL.Hints.Set (SDL.Hints.Render_Scale_Quality, "1");
+
+   if SDL.Inputs.Joysticks.Total < 1 then
+      Ada.Text_IO.Put_Line ("No joysticks connected");
       return;
    end if;
 
@@ -144,7 +152,8 @@ begin
       Title    => "SDL Tutorial",
       Position => SDL.Natural_Coordinates'(X => 20, Y => 20),
       Size     => SDL.Positive_Sizes'(Width, Height),
-      Flags    => 0);
+      Flags    => SDL.Video.Windows.Shown);
+
    SDL.Video.Renderers.Makers.Create
      (Window => Window,
       Rend   => Renderer,
@@ -164,4 +173,4 @@ begin
    SDL.Finalise;
 
    Ada.Text_IO.Put_Line ("Process completed.");
-end Rotation_And_Flipping;
+end Gamepads_And_Joysticks;
