@@ -12,9 +12,13 @@ Add to .gpr file
          ("-gnat2022", "-gnatyM120");
    end Compiler;
 
-Refactor to use a Load_Media routine.
-Create a README file for the repo.
-Commit the repo at some point.
+Refactor all projects to use an Init/Close/Load_Media routines scheme, control exceptions and always exit gracefully.
+Organise "with" sdl for relevant packages only.
+Create a README file for the sdl_tutorial repo.
+
 Start a game project.
+
+Notes:
+Haptic is not implemented.
 
 

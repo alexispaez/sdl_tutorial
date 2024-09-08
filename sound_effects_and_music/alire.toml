@@ -1,5 +1,5 @@
-name = "key_presses"
-description = "Control key presses with sdlada"
+name = "sound_effects_and_music"
+description = ""
 version = "0.1.0-dev"
 
 authors = ["Jose Alexis Paez"]
@@ -9,8 +9,17 @@ licenses = "MIT OR Apache-2.0 WITH LLVM-exception"
 website = ""
 tags = []
 
-executables = ["key_presses"]
+executables = ["sound_effects_and_music"]
+
+[[depends-on]]
+sdlada = "^2.5.124"
 
 [[pins]]
 sdlada = { path='../sdlada' }
+
+[[depends-on]]
+sdlada_mixer = "^2.5.22"
+
+[[pins]]
+sdlada_mixer = { url='https://github.com/ada-game-framework/sdlada_mixer.git' }
 
