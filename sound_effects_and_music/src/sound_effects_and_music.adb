@@ -8,8 +8,9 @@ with SDL.Hints;
 with SDL.Images;
 with SDL.Images.IO;
 with SDL.Mixer;
-with SDL.Mixer.Music;
-use SDL.Mixer.Music;
+with SDL.Mixer.Channels;  use SDL.Mixer.Channels;
+with SDL.Mixer.Chunks;
+with SDL.Mixer.Music;     use SDL.Mixer.Music;
 with SDL.Video.Rectangles;
 with SDL.Video.Renderers; use SDL.Video.Renderers;
 with SDL.Video.Renderers.Makers;
@@ -31,34 +32,37 @@ procedure Sound_Effects_And_Music is
 
    Texture  : SDL.Video.Textures.Texture;
    Music    : SDL.Mixer.Music.Music_Type;
-   --  Music : SDL.Mixer.Music.;
+   Scratch  : SDL.Mixer.Chunk_Type;
+   Scratch  : SDL.Mixer.Chunk_Type;
+   Scratch  : SDL.Mixer.Chunk_Type;
+   Scratch  : SDL.Mixer.Chunk_Type;
 
    procedure Load_Media is
 
       package UTF_Strings renames Ada.Strings.UTF_Encoding;
 
       procedure Load_Texture
-        (Texture        : in out SDL.Video.Textures.Texture;
-         Renderer       : SDL.Video.Renderers.Renderer;
-         File_Name      : UTF_Strings.UTF_String) is
-         Loaded_Surface : SDL.Video.Surfaces.Surface;
+        (Texture   : in out SDL.Video.Textures.Texture;
+         Renderer  : SDL.Video.Renderers.Renderer;
+         File_Name : UTF_Strings.UTF_String) is
+
+         Surface : SDL.Video.Surfaces.Surface;
+
       begin
-         SDL.Images.IO.Create (Loaded_Surface, File_Name);
+         SDL.Images.IO.Create (Surface, File_Name);
 
-         Loaded_Surface.Set_Colour_Key ((0, 255, 255, 255), True);
+         Surface.Set_Colour_Key ((0, 255, 255, 255), True);
 
-         SDL.Video.Textures.Makers.Create
-           (Texture,
-            Renderer,
-            Loaded_Surface);
+         SDL.Video.Textures.Makers.Create (Texture, Renderer, Surface);
 
-         Loaded_Surface.Finalize;
+         Surface.Finalize;
       end Load_Texture;
    begin
-      Load_Texture (Texture,
-                    Renderer,
-                    "../resources/prompt.png");
+      Load_Texture (Texture, Renderer, "../resources/prompt.png");
+
       SDL.Mixer.Music.Load ("../resources/beat.wav", Music);
+
+      SDL.Mixer.Chunks.Load ("../resources/scratch.wav", Scratch);
    end Load_Media;
 
    procedure Render
@@ -106,7 +110,11 @@ procedure Sound_Effects_And_Music is
                   case Event.Keyboard.Key_Sym.Key_Code is
                      when SDL.Events.Keyboards.Code_Escape =>
                         Finished := True;
+                     when SDL.Events.Keyboards.Code_4 =>
+                        --  PLay scratch effect
+                        SDL.Mixer.Channels.Play (-1, Scratch, 0);
                      when SDL.Events.Keyboards.Code_9 =>
+                        --  Handle the music
                         SDL.Mixer.Music.Play (Music, -1);
                      when others => null;
                   end case;
@@ -135,9 +143,7 @@ procedure Sound_Effects_And_Music is
    end Handle_Events;
 
 begin
-   if not SDL.Initialise (Flags =>
-                            SDL.Enable_Screen or
-                              SDL.Enable_Audio)
+   if not SDL.Initialise (SDL.Enable_Screen or SDL.Enable_Audio)
    then
       return;
    end if;
@@ -163,10 +169,11 @@ begin
       return;
    end if;
 
-   SDL.Mixer.Open (SDL.Mixer.Default_Frequency,
-                   SDL.Mixer.Default_Format,
-                   2,
-                   2048);
+   SDL.Mixer.Open
+     (SDL.Mixer.Default_Frequency,
+      SDL.Mixer.Default_Format,
+      2,
+      2048);
 
    Load_Media;
 
