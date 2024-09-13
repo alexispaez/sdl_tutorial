@@ -33,9 +33,9 @@ procedure Sound_Effects_And_Music is
    Texture  : SDL.Video.Textures.Texture;
    Music    : SDL.Mixer.Music.Music_Type;
    Scratch  : SDL.Mixer.Chunk_Type;
-   Scratch  : SDL.Mixer.Chunk_Type;
-   Scratch  : SDL.Mixer.Chunk_Type;
-   Scratch  : SDL.Mixer.Chunk_Type;
+   High     : SDL.Mixer.Chunk_Type;
+   Medium   : SDL.Mixer.Chunk_Type;
+   Low      : SDL.Mixer.Chunk_Type;
 
    procedure Load_Media is
 
@@ -63,6 +63,9 @@ procedure Sound_Effects_And_Music is
       SDL.Mixer.Music.Load ("../resources/beat.wav", Music);
 
       SDL.Mixer.Chunks.Load ("../resources/scratch.wav", Scratch);
+      SDL.Mixer.Chunks.Load ("../resources/high.wav", High);
+      SDL.Mixer.Chunks.Load ("../resources/medium.wav", Medium);
+      SDL.Mixer.Chunks.Load ("../resources/low.wav", Low);
    end Load_Media;
 
    procedure Render
@@ -87,12 +90,16 @@ procedure Sound_Effects_And_Music is
                      Angle,
                      Center_Point,
                      Flip_Type);
-
    end Render;
 
    procedure Free_Media is
    begin
-      null;
+      SDL.Mixer.Chunks.Free (Low);
+      SDL.Mixer.Chunks.Free (Medium);
+      SDL.Mixer.Chunks.Free (High);
+      SDL.Mixer.Chunks.Free (Scratch);
+
+      SDL.Mixer.Music.Free (Music);
    end Free_Media;
 
    procedure Handle_Events is
@@ -103,19 +110,44 @@ procedure Sound_Effects_And_Music is
    begin
       loop
          while SDL.Events.Events.Poll (Event) loop
+
             case Event.Common.Event_Type is
                when SDL.Events.Quit =>
                   Finished := True;
+
                when SDL.Events.Keyboards.Key_Down =>
+
                   case Event.Keyboard.Key_Sym.Key_Code is
                      when SDL.Events.Keyboards.Code_Escape =>
                         Finished := True;
+
+                     when SDL.Events.Keyboards.Code_1 =>
+                        --  Play high effect
+                        SDL.Mixer.Channels.Play (-1, High, 0);
+                     when SDL.Events.Keyboards.Code_2 =>
+                        --  Play medium effect
+                        SDL.Mixer.Channels.Play (-1, Medium, 0);
+                     when SDL.Events.Keyboards.Code_3 =>
+                        --  Play low effect
+                        SDL.Mixer.Channels.Play (-1, Low, 0);
                      when SDL.Events.Keyboards.Code_4 =>
-                        --  PLay scratch effect
+                        --  Play scratch effect
                         SDL.Mixer.Channels.Play (-1, Scratch, 0);
+
                      when SDL.Events.Keyboards.Code_9 =>
                         --  Handle the music
-                        SDL.Mixer.Music.Play (Music, -1);
+                        if SDL.Mixer.Music.Is_Playing = False then
+                           SDL.Mixer.Music.Play (Music, -1);
+                        else
+                           if SDL.Mixer.Music.Is_Paused then
+                              SDL.Mixer.Music.Resume;
+                           else
+                              SDL.Mixer.Music.Pause;
+                           end if;
+                        end if;
+                     when SDL.Events.Keyboards.Code_0 =>
+                        SDL.Mixer.Music.Halt;
+
                      when others => null;
                   end case;
                when others => null;
