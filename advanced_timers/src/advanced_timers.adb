@@ -1,13 +1,14 @@
 pragma Ada_2022;
 
 with Ada.Exceptions;
+with Ada.Strings.Fixed;
 with Ada.Text_IO;
 with Interfaces.C; use Interfaces.C;
 with SDL.Events.Events;
 with SDL.Events.Keyboards;
 with SDL.Hints;
 with SDL.Images;
-with SDL.Timers; use SDL.Timers;
+with SDL.Timers;
 with SDL.TTFs;
 with SDL.TTFs.Makers;
 with SDL.Video.Palettes;
@@ -17,20 +18,21 @@ with SDL.Video.Surfaces;
 with SDL.Video.Textures;
 with SDL.Video.Textures.Makers;
 with SDL.Video.Windows.Makers;
+with Timers;
 
 procedure Advanced_Timers is
    Screen_Width  : constant := 640;
    Screen_Height : constant := 480;
 
-   Window          : SDL.Video.Windows.Window;
-   Renderer        : SDL.Video.Renderers.Renderer;
-   Event           : SDL.Events.Events.Events;
+   Window                : SDL.Video.Windows.Window;
+   Renderer              : SDL.Video.Renderers.Renderer;
+   Event                 : SDL.Events.Events.Events;
    Start_Prompt_Texture  : SDL.Video.Textures.Texture;
    Pause_Prompt_Texture  : SDL.Video.Textures.Texture;
-   Time_Texture    : SDL.Video.Textures.Texture;
-   Font            : SDL.TTFs.Fonts;
+   Time_Texture          : SDL.Video.Textures.Texture;
+   Font                  : SDL.TTFs.Fonts;
 
-   Start_Time : SDL.Timers.Milliseconds_Long := 0;
+   Timer : Timers.Timer;
 
    function Initialise return Boolean is
       use SDL.Video.Renderers;
@@ -94,40 +96,68 @@ procedure Advanced_Timers is
       SDL.TTFs.Makers.Create (Font, "../resources//lazy.ttf", 28);
 
       Load_From_Rendered_Text
-        (Prompt_Texture,
-         "Press Enter to reset start time.",
+        (Start_Prompt_Texture,
+         "Press S to start or stop the timer",
+         (Alpha => 255, others => 0));
+      Load_From_Rendered_Text
+        (Pause_Prompt_Texture,
+         "Press P to pause or unpause the timer",
          (Alpha => 255, others => 0));
    end Load_Media;
 
-   procedure Render (Renderer : in out SDL.Video.Renderers.Renderer) is
-      Milliseconds : constant SDL.Timers.Milliseconds_Long :=
-        SDL.Timers.Ticks - Start_Time;
+   procedure Render_All (Renderer : in out SDL.Video.Renderers.Renderer;
+                         Time     : SDL.Timers.Milliseconds_Long) is
+
+      procedure Render (Renderer : in out SDL.Video.Renderers.Renderer;
+                        X        : SDL.Coordinate;
+                        Y        : SDL.Coordinate;
+                        Texture  : SDL.Video.Textures.Texture) is
+         Rectangle : constant SDL.Video.Rectangles.Rectangle :=
+                       (X,
+                        Y,
+                        Texture.Get_Size.Width,
+                        Texture.Get_Size.Height);
+      begin
+         Renderer.Copy_To (Texture, Rectangle);
+      end Render;
+
+      --  Format a float value as number with decimals
+      function Format (Value : Float) return String is
+         package FIO is new Ada.Text_IO.Float_IO (Float);
+         package AS renames Ada.Strings;
+
+         Result : String (1 .. 20);
+      begin
+         FIO.Put (To => Result, Item => Value, Aft => 2, Exp => 0);
+
+         return AS.Fixed.Trim (Result, Side => AS.Both);
+      end Format;
+
       Milliseconds_Text : constant String :=
-        "Milliseconds since start time" & Milliseconds'Image;
-
-      Prompt_Rectangle : constant SDL.Video.Rectangles.Rectangle :=
-        ((Screen_Width - Prompt_Texture.Get_Size.Width) / 2,
-         0,
-         Prompt_Texture.Get_Size.Width,
-         Prompt_Texture.Get_Size.Height);
+        "Seconds since start time " & Format (Float (Time) / 1000.0);
    begin
-      Renderer.Copy_To (Prompt_Texture, Prompt_Rectangle);
+      --  Render the prompts
+      Render (Renderer,
+              (Screen_Width - Start_Prompt_Texture.Get_Size.Width) / 2,
+              0,
+              Start_Prompt_Texture);
 
+      Render (Renderer,
+              (Screen_Width - Pause_Prompt_Texture.Get_Size.Width) / 2,
+              Start_Prompt_Texture.Get_Size.Height,
+              Pause_Prompt_Texture);
+
+      --  Render the time
       Load_From_Rendered_Text
         (Time_Texture,
          Milliseconds_Text,
          (Alpha => 255, others => 0));
 
-      declare
-         Time_Rectangle : constant SDL.Video.Rectangles.Rectangle :=
-           ((Screen_Width - Time_Texture.Get_Size.Width) / 2,
-            (Screen_Height - Time_Texture.Get_Size.Height) / 2,
-            Time_Texture.Get_Size.Width,
-            Time_Texture.Get_Size.Height);
-      begin
-         Renderer.Copy_To (Time_Texture, Time_Rectangle);
-      end;
-   end Render;
+      Render (Renderer,
+              (Screen_Width - Time_Texture.Get_Size.Width) / 2,
+              (Screen_Height - Time_Texture.Get_Size.Height) / 2,
+              Time_Texture);
+   end Render_All;
 
    procedure Handle_Events is
       Finished : Boolean := False;
@@ -146,8 +176,19 @@ procedure Advanced_Timers is
                      when SDL.Events.Keyboards.Code_Escape =>
                         Finished := True;
 
-                     when SDL.Events.Keyboards.Code_Return =>
-                        Start_Time := SDL.Timers.Ticks;
+                     when SDL.Events.Keyboards.Code_S =>
+                        if Timer.Is_Started then
+                           Timer.Stop;
+                        else
+                           Timer.Start;
+                        end if;
+
+                     when SDL.Events.Keyboards.Code_P =>
+                        if Timer.Is_Paused then
+                           Timer.Unpause;
+                        else
+                           Timer.Pause;
+                        end if;
 
                      when others => null;
                   end case;
@@ -160,7 +201,7 @@ procedure Advanced_Timers is
          Renderer.Clear;
 
          --  Render graphics
-         Render (Renderer);
+         Render_All (Renderer, Timer.Get_Ticks);
 
          --  Update the screen
          Renderer.Present;
