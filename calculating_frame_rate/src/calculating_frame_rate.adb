@@ -21,21 +21,21 @@ with SDL.Video.Windows.Makers;
 with Timers;
 
 procedure Calculating_Frame_Rate is
+
+   package Renderers renames SDL.Video.Renderers;
+   package Textures renames SDL.Video.Textures;
+
    Screen_Width  : constant := 640;
    Screen_Height : constant := 480;
 
-   Window                : SDL.Video.Windows.Window;
-   Renderer              : SDL.Video.Renderers.Renderer;
-   Event                 : SDL.Events.Events.Events;
-   Start_Prompt_Texture  : SDL.Video.Textures.Texture;
-   Pause_Prompt_Texture  : SDL.Video.Textures.Texture;
-   Time_Texture          : SDL.Video.Textures.Texture;
-   Font                  : SDL.TTFs.Fonts;
-
-   Timer : Timers.Timer;
+   Window       : SDL.Video.Windows.Window;
+   Renderer     : Renderers.Renderer;
+   Event        : SDL.Events.Events.Events;
+   FPS_Texture  : Textures.Texture;
+   Font         : SDL.TTFs.Fonts;
 
    function Initialise return Boolean is
-      use SDL.Video.Renderers;
+      use Renderers;
    begin
       if not SDL.Initialise (Flags => SDL.Enable_Screen) then
          return False;
@@ -45,16 +45,16 @@ procedure Calculating_Frame_Rate is
 
       SDL.Video.Windows.Makers.Create
         (Win      => Window,
-         Title    => "SDL Tutorial - Advanced Timers",
+         Title    => "SDL Tutorial - Calculating Frame Rate",
          Position => SDL.Natural_Coordinates'(X => 20, Y => 20),
          Size     => SDL.Positive_Sizes'(Screen_Width, Screen_Height),
          Flags    => 0);
 
-      SDL.Video.Renderers.Makers.Create
+      Renderers.Makers.Create
         (Window => Window,
          Rend   => Renderer,
-         Flags  => SDL.Video.Renderers.Accelerated or
-           SDL.Video.Renderers.Present_V_Sync);
+         Flags  => Renderers.Accelerated or
+           Renderers.Present_V_Sync);
 
       Renderer.Set_Draw_Colour ((others => 255));
 
@@ -78,10 +78,9 @@ procedure Calculating_Frame_Rate is
       SDL.Finalise;
    end Close;
 
-   procedure Load_From_Rendered_Text
-     (Texture : in out SDL.Video.Textures.Texture;
-      Text    : String;
-      Colour  : SDL.Video.Palettes.Colour) is
+   procedure Load_From_Rendered_Text (Texture : in out Textures.Texture;
+                                      Text    : String;
+                                      Colour  : SDL.Video.Palettes.Colour) is
       Text_Surface : SDL.Video.Surfaces.Surface;
    begin
       Text_Surface := Font.Render_Solid (Text, Colour);
@@ -94,24 +93,15 @@ procedure Calculating_Frame_Rate is
    procedure Load_Media is
    begin
       SDL.TTFs.Makers.Create (Font, "../resources//lazy.ttf", 28);
-
-      Load_From_Rendered_Text
-        (Start_Prompt_Texture,
-         "Press S to start or stop the timer",
-         (Alpha => 255, others => 0));
-      Load_From_Rendered_Text
-        (Pause_Prompt_Texture,
-         "Press P to pause or unpause the timer",
-         (Alpha => 255, others => 0));
    end Load_Media;
 
-   procedure Render_All (Renderer : in out SDL.Video.Renderers.Renderer;
-                         Time     : SDL.Timers.Milliseconds_Long) is
+   procedure Render_All (Renderer : in out Renderers.Renderer;
+                         FPS      : Float) is
 
-      procedure Render (Renderer : in out SDL.Video.Renderers.Renderer;
+      procedure Render (Renderer : in out Renderers.Renderer;
                         X        : SDL.Coordinate;
                         Y        : SDL.Coordinate;
-                        Texture  : SDL.Video.Textures.Texture) is
+                        Texture  : Textures.Texture) is
          Rectangle : constant SDL.Video.Rectangles.Rectangle :=
                        (X,
                         Y,
@@ -121,7 +111,7 @@ procedure Calculating_Frame_Rate is
          Renderer.Copy_To (Texture, Rectangle);
       end Render;
 
-      --  Format a float value as number with decimals
+      --  Format a float value as a number with decimals
       function Format (Value : Float) return String is
          package FIO is new Ada.Text_IO.Float_IO (Float);
          package AS renames Ada.Strings;
@@ -133,35 +123,29 @@ procedure Calculating_Frame_Rate is
          return AS.Fixed.Trim (Result, Side => AS.Both);
       end Format;
 
-      Milliseconds_Text : constant String :=
-        "Seconds since start time " & Format (Float (Time) / 1000.0);
+      FPS_Text : constant String :=
+        "Average Frames Per Second " & Format (FPS);
    begin
-      --  Render the prompts
-      Render (Renderer,
-              (Screen_Width - Start_Prompt_Texture.Get_Size.Width) / 2,
-              0,
-              Start_Prompt_Texture);
-
-      Render (Renderer,
-              (Screen_Width - Pause_Prompt_Texture.Get_Size.Width) / 2,
-              Start_Prompt_Texture.Get_Size.Height,
-              Pause_Prompt_Texture);
-
       --  Render the time
       Load_From_Rendered_Text
-        (Time_Texture,
-         Milliseconds_Text,
+        (FPS_Texture,
+         FPS_Text,
          (Alpha => 255, others => 0));
 
       Render (Renderer,
-              (Screen_Width - Time_Texture.Get_Size.Width) / 2,
-              (Screen_Height - Time_Texture.Get_Size.Height) / 2,
-              Time_Texture);
+              (Screen_Width - FPS_Texture.Get_Size.Width) / 2,
+              (Screen_Height - FPS_Texture.Get_Size.Height) / 2,
+              FPS_Texture);
    end Render_All;
 
    procedure Handle_Events is
       Finished : Boolean := False;
+      Frames_Counted : Natural := Natural'First;
+      Timer : Timers.Timer;
    begin
+
+      Timer.Start;
+
       loop
          while SDL.Events.Events.Poll (Event) loop
 
@@ -176,20 +160,6 @@ procedure Calculating_Frame_Rate is
                      when SDL.Events.Keyboards.Code_Escape =>
                         Finished := True;
 
-                     when SDL.Events.Keyboards.Code_S =>
-                        if Timer.Is_Started then
-                           Timer.Stop;
-                        else
-                           Timer.Start;
-                        end if;
-
-                     when SDL.Events.Keyboards.Code_P =>
-                        if Timer.Is_Paused then
-                           Timer.Unpause;
-                        else
-                           Timer.Pause;
-                        end if;
-
                      when others => null;
                   end case;
                when others => null;
@@ -200,11 +170,26 @@ procedure Calculating_Frame_Rate is
          Renderer.Set_Draw_Colour ((others => 255));
          Renderer.Clear;
 
-         --  Render graphics
-         Render_All (Renderer, Timer.Get_Ticks);
+         declare
+            --  Calculate frame average
+            Ticks : constant SDL.Timers.Milliseconds_Long := Timer.Get_Ticks;
+            FPS_Average : Float;
+
+            use SDL.Timers;
+         begin
+            if Ticks /= 0 then
+               FPS_Average := Float (Frames_Counted) /
+                 (Float (Ticks) / 1000.0);
+            end if;
+            --  Render graphics
+            Render_All (Renderer, FPS_Average);
+         end;
 
          --  Update the screen
          Renderer.Present;
+
+         --  Count one frame
+         Frames_Counted := @ + 1;
 
          exit when Finished;
       end loop;
