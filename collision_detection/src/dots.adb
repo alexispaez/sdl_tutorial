@@ -47,31 +47,66 @@ package body Dots is
    procedure Move (Self        : in out Dot;
                    Screen_Size : SDL.Positive_Sizes;
                    Wall        : Rectangles.Rectangle) is
-      procedure Collision_Detection (Rect_A : Rectangles.Rectangle;
-                                     Rect_B : Rectangles.Rectangle) is
+      function Check_Collision
+        (Rect_A : Rectangles.Rectangle;
+         Rect_B : Rectangles.Rectangle) return Boolean is
+
+         Left_A   : constant Integer := Integer (Rect_A.X);
+         Right_A  : constant Integer := Integer (Rect_A.X) + Integer (Rect_A.Width);
+         Top_A    : constant Integer := Integer (Rect_A.Y);
+         Bottom_A : constant Integer := Integer (Rect_A.Y) + Integer (Rect_A.Height);
+
+         Left_B   : constant Integer := Integer (Rect_B.X);
+         Right_B  : constant Integer := Integer (Rect_B.X) + Integer (Rect_B.Width);
+         Top_B    : constant Integer := Integer (Rect_B.Y);
+         Bottom_B : constant Integer := Integer (Rect_B.Y) + Integer (Rect_B.Height);
       begin
-         null;
-      end Collision_Detection;
+         if Bottom_A <= Top_B then
+            return False;
+         end if;
+
+         if Top_A >= Bottom_B then
+            return False;
+         end if;
+
+         if Right_A <= Left_B then
+            return False;
+         end if;
+
+         if Left_A >= Right_B then
+            return False;
+         end if;
+
+         return True;
+      end Check_Collision;
 
    begin
       --  Move the dot left or right
       Self.Pos_X := @ + Self.Vel_X;
+      Self.Collider.X := SDL.Coordinate (Self.Pos_X);
 
+      --  Check if the dot went too far left or right or collided
       if Self.Pos_X < 0 or else
-        (Self.Pos_X + Dot_Width) > Integer (Screen_Size.Width)
+        (Self.Pos_X + Dot_Width) > Integer (Screen_Size.Width) or else
+        Check_Collision (Self.Collider, Wall)
       then
-         --  Reached the right edge of the screen, move back one step
+         --  Move back one step
          Self.Pos_X := @ - Self.Vel_X;
+         Self.Collider.X := SDL.Coordinate (Self.Pos_X);
       end if;
 
       --  Move the dot up or down
       Self.Pos_Y := @ + Self.Vel_Y;
+      Self.Collider.Y := SDL.Coordinate (Self.Pos_Y);
 
+      --  Check if the dot went too far up or down or collided
       if Self.Pos_Y < 0 or else
-        (Self.Pos_Y + Dot_Height) > Integer (Screen_Size.Height)
+        (Self.Pos_Y + Dot_Height) > Integer (Screen_Size.Height) or else
+        Check_Collision (Self.Collider, Wall)
       then
-         --  Reached the bottom edge of the screen, move back one step
+         --  Move back one step
          Self.Pos_Y := @ - Self.Vel_Y;
+         Self.Collider.Y := SDL.Coordinate (Self.Pos_Y);
       end if;
    end Move;
 
