@@ -6,11 +6,27 @@ package body Dots is
 
    function Create (X, Y : Integer) return Dot is
    begin
-      return Dot'(Pos_X => X,
-                  Pos_Y => Y,
-                  Vel_X => 0,
-                  Vel_Y => 0,
-                  Collider => (0, 0, Dot_Width, Dot_Height));
+      --  return Dot'(Pos_X => X,
+      --              Pos_Y => Y,
+      --              Vel_X => 0,
+      --              Vel_Y => 0,
+      --              Collider => (0, 0, Dot_Width, Dot_Height));
+      return D : Dot do
+         D.Pos_X := X;
+         D.Pos_Y := Y;
+         D.Vel_X := 0;
+         D.Vel_Y := 0;
+         D.Colliders.Append (Collider'(Width => 6, Height => 1, others => 0));
+         D.Colliders.Append (Collider'(Width => 6, Height => 1, others => 0));
+         D.Colliders.Append (Collider'(Width => 6, Height => 1, others => 0));
+         D.Colliders.Append (Collider'(Width => 6, Height => 1, others => 0));
+         D.Colliders.Append (Collider'(Width => 6, Height => 1, others => 0));
+         D.Colliders.Append (Collider'(Width => 6, Height => 1, others => 0));
+         D.Colliders.Append (Collider'(Width => 6, Height => 1, others => 0));
+         D.Colliders.Append (Collider'(Width => 6, Height => 1, others => 0));
+         D.Colliders.Append (Collider'(Width => 6, Height => 1, others => 0));
+         D.Colliders.Append (Collider'(Width => 6, Height => 1, others => 0));
+      end return;
    end Create;
 
    procedure Handle_Events (Self  : in out Dot;
