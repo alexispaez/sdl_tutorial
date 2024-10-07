@@ -11,6 +11,11 @@ package body SDL.Video.Textures.Extensions is
    begin
       SDL.Images.IO.Create (Surface, File_Name);
 
+      Surface.Set_Colour_Key ((Red  => 255,
+                               Green => 255,
+                               Blue  => 255,
+                               Alpha => 0), True);
+
       SDL.Video.Textures.Makers.Create (Self, Renderer, Surface);
 
       Surface.Finalize;

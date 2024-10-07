@@ -8,7 +8,6 @@ with SDL.Hints;
 with SDL.Images;
 with SDL.TTFs;
 with SDL.TTFs.Makers;
-with SDL.Video.Rectangles;
 with SDL.Video.Renderers.Makers;
 with SDL.Video.Textures;
 with SDL.Video.Windows.Makers;
@@ -18,7 +17,6 @@ with Dots;
 procedure Per_Pixel_Collision_Detection is
 
    package Events renames SDL.Events;
-   package Rectangles renames SDL.Video.Rectangles;
    package Renderers renames SDL.Video.Renderers;
    package Textures renames SDL.Video.Textures;
    package TTFs renames SDL.TTFs;
@@ -31,10 +29,9 @@ procedure Per_Pixel_Collision_Detection is
    Event     : Events.Events.Events;
    Font      : TTFs.Fonts;
    Texture   : Textures.Texture;
-   Dot       : Dots.Dot;
+   Dot       : Dots.Dot := Dots.Create (0, 0);
    Other_Dot : Dots.Dot := Dots.Create (Integer (Screen_Size.Width) / 4,
                                         Integer (Screen_Size.Height) / 4);
-   Wall     : constant Rectangles.Rectangle := (300, 40, 40, 400);
 
    function Initialise return Boolean is
       use Renderers;
@@ -47,7 +44,7 @@ procedure Per_Pixel_Collision_Detection is
 
       Windows.Makers.Create
         (Win      => Window,
-         Title    => "SDL Tutorial - Motion",
+         Title    => "SDL Tutorial - Per-Pixel Collision Detection",
          Position => SDL.Natural_Coordinates'(X => 20, Y => 20),
          Size     => Screen_Size,
          Flags    => 0);
@@ -82,7 +79,7 @@ procedure Per_Pixel_Collision_Detection is
 
    procedure Load_Media is
    begin
-      TTFs.Makers.Create (Font, "../resources//lazy.ttf", 28);
+      TTFs.Makers.Create (Font, "../resources/lazy.ttf", 28);
 
       Textures.Extensions.Load_From_File (Texture, Renderer,
                                                     "../resources/dot.bmp");
@@ -96,7 +93,6 @@ procedure Per_Pixel_Collision_Detection is
 
       --  Set drawing color to black and draw the wall
       Renderer.Set_Draw_Colour ((others => 0));
-      Renderer.Draw (Wall);
    end Render_All;
 
    procedure Handle_Events is
@@ -127,7 +123,7 @@ procedure Per_Pixel_Collision_Detection is
          end loop;
 
          --  Move the dot
-         Dot.Move (Screen_Size, Wall);
+         Dot.Move (Screen_Size, Other_Dot.Get_Colliders);
 
          --  Clear screen
          Renderer.Set_Draw_Colour ((others => 255));

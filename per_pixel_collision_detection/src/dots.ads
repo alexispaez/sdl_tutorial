@@ -15,7 +15,7 @@ package Dots is
    Dot_Height         : constant := 20;
    Velocity_Increment : constant := 1;
 
-   type Dot is tagged private;
+   type Dot is tagged limited private;
    type Collider is new Rectangles.Rectangle;
 
    package Collider_Vectors is new
@@ -27,9 +27,11 @@ package Dots is
    procedure Handle_Events (Self  : in out Dot;
                             Event : Events.Events.Events);
 
-   procedure Move (Self        : in out Dot;
-                   Screen_Size : SDL.Positive_Sizes;
-                   Wall        : Rectangles.Rectangle);
+   procedure Move (Self            : in out Dot;
+                   Screen_Size     : SDL.Positive_Sizes;
+                   Other_Colliders : Collider_Vectors.Vector);
+
+   function Get_Colliders (Self : in out Dot) return Collider_Vectors.Vector;
 
    procedure Render (Self        : in out Dot;
                      Renderer    : in out Renderers.Renderer;
@@ -37,10 +39,11 @@ package Dots is
                      Screen_Size : SDL.Positive_Sizes);
 private
 
-   type Dot is tagged record
+   type Dot is tagged limited record
       Pos_X, Pos_Y : Integer := 0;
       Vel_X, Vel_Y : Integer := 0;
       Colliders    : Collider_Vectors.Vector;
    end record;
 
+   procedure Shift_Colliders (Self : in out Dot);
 end Dots;
