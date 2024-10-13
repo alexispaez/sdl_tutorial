@@ -15,7 +15,7 @@ with SDL.Video.Windows.Makers;
 with SDL.Video.Textures.Extensions;
 with Dots;
 
-procedure Collision_Detection is
+procedure Circular_Collision_Detection is
 
    package Events renames SDL.Events;
    package Rectangles renames SDL.Video.Rectangles;
@@ -26,13 +26,15 @@ procedure Collision_Detection is
 
    Screen_Size : constant SDL.Positive_Sizes := (640, 480);
 
-   Window   : Windows.Window;
-   Renderer : Renderers.Renderer;
-   Event    : Events.Events.Events;
-   Font     : TTFs.Fonts;
-   Texture  : Textures.Texture;
-   Dot      : Dots.Dot;
-   Wall     : constant Rectangles.Rectangle := (300, 40, 40, 400);
+   Window    : Windows.Window;
+   Renderer  : Renderers.Renderer;
+   Event     : Events.Events.Events;
+   Font      : TTFs.Fonts;
+   Texture   : Textures.Texture;
+   Dot       : Dots.Dot := Dots.Create (0, 0);
+   Other_Dot : Dots.Dot := Dots.Create (Integer (Screen_Size.Width) / 4,
+                                        Integer (Screen_Size.Height) / 4);
+   Wall      : constant Rectangles.Rectangle := (300, 40, 40, 400);
 
    function Initialise return Boolean is
       use Renderers;
@@ -45,7 +47,7 @@ procedure Collision_Detection is
 
       Windows.Makers.Create
         (Win      => Window,
-         Title    => "SDL Tutorial - Collision Detection",
+         Title    => "SDL Tutorial - Per-Pixel Collision Detection",
          Position => SDL.Natural_Coordinates'(X => 20, Y => 20),
          Size     => Screen_Size,
          Flags    => 0);
@@ -80,7 +82,7 @@ procedure Collision_Detection is
 
    procedure Load_Media is
    begin
-      TTFs.Makers.Create (Font, "../resources//lazy.ttf", 28);
+      TTFs.Makers.Create (Font, "../resources/lazy.ttf", 28);
 
       Textures.Extensions.Load_From_File (Texture, Renderer,
                                                     "../resources/dot.bmp");
@@ -88,12 +90,12 @@ procedure Collision_Detection is
 
    procedure Render_All (Renderer : in out Renderers.Renderer) is
    begin
-      --  Draw the dot
+      --  Draw the dots
       Dot.Render (Renderer, Texture, Screen_Size);
+      Other_Dot.Render (Renderer, Texture, Screen_Size);
 
       --  Set drawing color to black and draw the wall
       Renderer.Set_Draw_Colour ((others => 0));
-      Renderer.Draw (Wall);
    end Render_All;
 
    procedure Handle_Events is
@@ -124,7 +126,7 @@ procedure Collision_Detection is
          end loop;
 
          --  Move the dot
-         Dot.Move (Screen_Size, Wall);
+         Dot.Move (Screen_Size, Wall, Other_Dot.Get_Collider);
 
          --  Clear screen
          Renderer.Set_Draw_Colour ((others => 255));
@@ -161,4 +163,4 @@ exception
       Put_Line ("Full exception information:");
       Put_Line (Ada.Exceptions.Exception_Information (Event));
       Put_Line ("Process not completed.");
-end Collision_Detection;
+end Circular_Collision_Detection;
