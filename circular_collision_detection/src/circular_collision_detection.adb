@@ -14,6 +14,7 @@ with SDL.Video.Textures;
 with SDL.Video.Windows.Makers;
 with SDL.Video.Textures.Extensions;
 with Dots;
+with Interfaces.C;
 
 procedure Circular_Collision_Detection is
 
@@ -24,6 +25,8 @@ procedure Circular_Collision_Detection is
    package TTFs renames SDL.TTFs;
    package Windows renames SDL.Video.Windows;
 
+   use type Interfaces.C.int;
+
    Screen_Size : constant SDL.Positive_Sizes := (640, 480);
 
    Window    : Windows.Window;
@@ -31,9 +34,10 @@ procedure Circular_Collision_Detection is
    Event     : Events.Events.Events;
    Font      : TTFs.Fonts;
    Texture   : Textures.Texture;
-   Dot       : Dots.Dot := Dots.Create (0, 0);
-   Other_Dot : Dots.Dot := Dots.Create (Integer (Screen_Size.Width) / 4,
-                                        Integer (Screen_Size.Height) / 4);
+   Dot       : Dots.Dot := Dots.Create (Dots.Dot_Width / 2,
+                                        Dots.Dot_Height / 2);
+   Other_Dot : Dots.Dot := Dots.Create (SDL.Coordinate (Screen_Size.Width / 4),
+                                        SDL.Coordinate (Screen_Size.Height / 4));
    Wall      : constant Rectangles.Rectangle := (300, 40, 40, 400);
 
    function Initialise return Boolean is
@@ -96,6 +100,7 @@ procedure Circular_Collision_Detection is
 
       --  Set drawing color to black and draw the wall
       Renderer.Set_Draw_Colour ((others => 0));
+      Renderer.Draw (Wall);
    end Render_All;
 
    procedure Handle_Events is
