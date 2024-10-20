@@ -15,6 +15,7 @@ with SDL.Images;
 with SDL.Images.IO;
 with SDL.Inputs.Joysticks; use SDL.Inputs.Joysticks;
 with SDL.Inputs.Joysticks.Game_Controllers;
+with SDL.Inputs.Joysticks.Game_Controllers.Makers;
 with SDL.Inputs.Joysticks.Makers;
 with SDL.Video.Rectangles;
 with SDL.Video.Renderers; use SDL.Video.Renderers;
@@ -39,6 +40,7 @@ procedure Force_Feedback is
    Arrow_Texture     : SDL.Video.Textures.Texture;
    Joystick          : SDL.Inputs.Joysticks.Joystick;
    Joystick_Instance : SDL.Inputs.Joysticks.Instances;
+   Game_Controller   : SDL.Inputs.Joysticks.Game_Controllers.Game_Controller;
 
    procedure Load_Media
      (Texture   : in out SDL.Video.Textures.Texture;
@@ -199,6 +201,7 @@ begin
                       SDL.Error.Get);
    else
       TIO.Put_Line ("Joystick is game controller interface compatible.");
+      SDL.Inputs.Joysticks.Game_Controllers.Makers.Create (1, Game_Controller);
    end if;
 
    --  Open the first joystick

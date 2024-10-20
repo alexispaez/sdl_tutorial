@@ -12,12 +12,6 @@ tags = []
 executables = ["force_feedback"]
 
 [[depends-on]]
-sdlada = "^2.5.124"
-
-[[pins]]
-sdlada = { url='https://github.com/ada-game-framework/sdlada.git' }
-
-[[depends-on]]
 sdlada_mixer = "^2.5.22"
 
 [[pins]]
@@ -34,3 +28,6 @@ sdlada_ttf = "~0.1.0-dev"
 
 [[pins]]
 sdlada_ttf = { url='https://github.com/ada-game-framework/sdlada_ttf.git' }
+
+[[pins]]
+sdlada = { path='../sdlada' }
