@@ -6,7 +6,6 @@ use Ada.Numerics.Long_Elementary_Functions;
 with Ada.Strings.UTF_Encoding;
 with Ada.Text_IO;
 with SDL; use SDL;
-with SDL.Error;
 with SDL.Events.Events;
 with SDL.Events.Joysticks; use SDL.Events.Joysticks;
 with SDL.Events.Keyboards;
@@ -16,7 +15,6 @@ with SDL.Images.IO;
 with SDL.Inputs.Joysticks; use SDL.Inputs.Joysticks;
 with SDL.Inputs.Joysticks.Game_Controllers;
 with SDL.Inputs.Joysticks.Game_Controllers.Makers;
-with SDL.Inputs.Joysticks.Makers;
 with SDL.Video.Rectangles;
 with SDL.Video.Renderers; use SDL.Video.Renderers;
 with SDL.Video.Renderers.Makers;
@@ -37,8 +35,7 @@ procedure Force_Feedback is
    Window            : SDL.Video.Windows.Window;
    Renderer          : SDL.Video.Renderers.Renderer;
    Event             : SDL.Events.Events.Events;
-   Arrow_Texture     : SDL.Video.Textures.Texture;
-   Joystick          : SDL.Inputs.Joysticks.Joystick;
+   Splash_Texture    : SDL.Video.Textures.Texture;
    Joystick_Instance : SDL.Inputs.Joysticks.Instances;
    Game_Controller   : SDL.Inputs.Joysticks.Game_Controllers.Game_Controller;
 
@@ -85,7 +82,6 @@ procedure Force_Feedback is
                      Angle,
                      Center_Point,
                      Flip_Type);
-
    end Render;
 
    procedure Handle_Events is
@@ -98,9 +94,11 @@ procedure Force_Feedback is
       Y_Dir : Integer := 0;
 
       Angle    : Long_Float := 0.0;
-      Flip_Type : constant SDL.Video.Renderers.Renderer_Flip := SDL.Video.Renderers.None;
+      Flip_Type : constant SDL.Video.Renderers.Renderer_Flip :=
+                    SDL.Video.Renderers.None;
 
       use type Interfaces.C.int;
+      use type Interfaces.Unsigned_16;
    begin
       loop
          while SDL.Events.Events.Poll (Event) loop
@@ -108,10 +106,21 @@ procedure Force_Feedback is
                when SDL.Events.Quit =>
                   Finished := True;
 
+               when SDL.Events.Joysticks.Button_Down =>
+
+                  if SDL.Inputs.Joysticks.Game_Controllers.Rumble
+                    (Game_Controller,
+                     16#FFFF# * 3 / 4,
+                     16#FFFF# * 3 / 4,
+                     500) = -1
+                  then
+                     TIO.Put_Line ("Could not rumble");
+                  end if;
+
                when SDL.Events.Joysticks.Axis_Motion =>
 
                   if Event.Joystick_Axis.Which = IDs (Joystick_Instance) then
-                     --  Motion on the first joystick
+                     --  Motion on the joystick, check axes 0 and 1 only
                      if Event.Joystick_Axis.Axis = 0 then
                         --  X axis motion
                         if Event.Joystick_Axis.Value < -Joystick_Dead_Zone then
@@ -160,9 +169,9 @@ procedure Force_Feedback is
          end if;
 
          Render (Renderer,
-                         Arrow_Texture,
-                         (Width - Arrow_Texture.Get_Size.Width) / 2,
-                         (Height - Arrow_Texture.Get_Size.Height) / 2,
+                         Splash_Texture,
+                         (Width - Splash_Texture.Get_Size.Width) / 2,
+                         (Height - Splash_Texture.Get_Size.Height) / 2,
                          Angle,
                          Flip_Type);
 
@@ -173,11 +182,10 @@ procedure Force_Feedback is
    end Handle_Events;
 
 begin
-   if not SDL.Initialise (Flags => SDL.Enable_Screen or
-                            SDL.Enable_Joystick or
-                              SDL.Enable_Haptic or
-                                SDL.Enable_Game_Controller)
-
+   if not SDL.Initialise (Flags => SDL.Enable_Screen
+                          or SDL.Enable_Joystick
+                          or SDL.Enable_Haptic
+                          or SDL.Enable_Game_Controller)
    then
       return;
    end if;
@@ -195,18 +203,32 @@ begin
    end if;
 
    --  Check if the first joystick is game controller compatible
-   if SDL.Inputs.Joysticks.Game_Controllers.Is_Game_Controller (1) = False then
-      TIO.Put_Line ("Warning: Joystick is not game controller " &
-                      "interface compatible! SDL Error: " &
-                      SDL.Error.Get);
-   else
-      TIO.Put_Line ("Joystick is game controller interface compatible.");
-      SDL.Inputs.Joysticks.Game_Controllers.Makers.Create (1, Game_Controller);
-   end if;
+   if SDL.Inputs.Joysticks.Game_Controllers.Is_Game_Controller (1) = True then
 
-   --  Open the first joystick
-   SDL.Inputs.Joysticks.Makers.Create (1, Joystick);
-   Joystick_Instance := SDL.Inputs.Joysticks.Instance (Joystick);
+      TIO.Put_Line ("Joystick is game controller interface compatible.");
+
+      --  Open the game controller
+      SDL.Inputs.Joysticks.Game_Controllers.Makers.Create (1, Game_Controller);
+      declare
+         --  Get the joystick to then get the joystick instance
+         --  which is needed for the axis events
+         Joystick : constant SDL.Inputs.Joysticks.Joystick :=
+                      SDL.Inputs.Joysticks.Game_Controllers.Get_Joystick (Game_Controller);
+      begin
+         Joystick_Instance := SDL.Inputs.Joysticks.Instance (Joystick);
+
+         TIO.Put_Line ("Joystick has" &
+                         SDL.Inputs.Joysticks.Axes (Joystick)'Image &
+                         " axes.");
+      end;
+
+      --  Check if it supports rumble
+      if SDL.Inputs.Joysticks.Game_Controllers.Has_Rumble (Game_Controller) then
+         TIO.Put_Line ("Joystick supports rumble.");
+      else
+         TIO.Put_Line ("Joystick does not support rumble.");
+      end if;
+   end if;
 
    if not SDL.Images.Initialise (Flags => SDL.Images.Enable_PNG) then
       return;
@@ -214,7 +236,7 @@ begin
 
    SDL.Video.Windows.Makers.Create
      (Win      => Window,
-      Title    => "SDL Tutorial",
+      Title    => "Force Feedback",
       Position => SDL.Natural_Coordinates'(X => 20, Y => 20),
       Size     => SDL.Positive_Sizes'(Width, Height),
       Flags    => SDL.Video.Windows.Shown);
@@ -227,12 +249,11 @@ begin
 
    Renderer.Set_Draw_Colour ((others => 255));
 
-   Load_Media (Arrow_Texture,
-               Renderer,
-               "../resources/arrow.png");
+   Load_Media (Splash_Texture, Renderer, "../resources/splash.png");
 
    Handle_Events;
 
+   SDL.Inputs.Joysticks.Game_Controllers.Close (Game_Controller);
    Window.Finalize;
    SDL.Images.Finalise;
    SDL.Finalise;
