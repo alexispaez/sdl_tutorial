@@ -32,10 +32,14 @@ package Dots is
 
    function Get_Collider (Self : in out Dot) return Circle_Collider;
 
-   procedure Render (Self        : in out Dot;
-                     Renderer    : in out Renderers.Renderer;
-                     Texture     : Textures.Texture;
-                     Screen_Size : SDL.Positive_Sizes);
+   function Get_Pos_X (Self : Dot) return SDL.Coordinate;
+   function Get_Pos_Y (Self : Dot) return SDL.Coordinate;
+
+   procedure Render (Self     : in out Dot;
+                     Renderer : in out Renderers.Renderer;
+                     Texture  : Textures.Texture;
+                     X        : SDL.Coordinate;
+                     Y        : SDL.Coordinate);
 private
 
    type Circle_Collider is record

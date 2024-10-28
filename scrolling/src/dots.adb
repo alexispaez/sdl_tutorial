@@ -230,16 +230,27 @@ package body Dots is
       return Self.Collider;
    end Get_Collider;
 
-   procedure Render (Self        : in out Dot;
-                     Renderer    : in out Renderers.Renderer;
-                     Texture     : Textures.Texture;
-                     Screen_Size : SDL.Positive_Sizes) is
+   function Get_Pos_X (Self : Dot) return SDL.Coordinate is
+   begin
+      return Self.Pos_X;
+   end Get_Pos_X;
+
+   function Get_Pos_Y (Self : Dot) return SDL.Coordinate is
+   begin
+      return Self.Pos_Y;
+   end Get_Pos_Y;
+
+   procedure Render (Self     : in out Dot;
+                     Renderer : in out Renderers.Renderer;
+                     Texture  : Textures.Texture;
+                     X        : SDL.Coordinate;
+                     Y        : SDL.Coordinate) is
    begin
       --  Offset the rendering to match the actual center of the dot
       SDL.Video.Textures.Extensions.Render (Texture,
                                             Renderer,
-                                            Self.Pos_X - Self.Collider.R,
-                                            Self.Pos_Y - Self.Collider.R);
+                                            X,
+                                            Y);
    end Render;
 
    procedure Shift_Colliders (Self : in out Dot) is

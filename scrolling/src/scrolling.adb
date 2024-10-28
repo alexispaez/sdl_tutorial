@@ -83,15 +83,6 @@ procedure Scrolling is
                                           "../resources/bg.png");
    end Load_Media;
 
-   procedure Render_All (Renderer : in out Renderers.Renderer) is
-   begin
-      --  Draw the background
-      Renderer.Copy_From (BG_Texture, Camera);
-
-      --  Draw the dot
-      Dot.Render (Renderer, Dot_Texture, Screen_Size);
-   end Render_All;
-
    procedure Handle_Events is
       Finished : Boolean := False;
    begin
@@ -124,14 +115,39 @@ procedure Scrolling is
          --  Move the dot
          Dot.Move (Level_Size);
 
-         -- Center the camera over the dot
+         --  Center the camera over the dot
+         Camera.X := (Dot.Get_Pos_X + Dots.Dot_Width / 2)
+           - Screen_Size.Width / 2;
+         Camera.Y := (Dot.Get_Pos_Y + Dots.Dot_Height / 2)
+           - Screen_Size.Height / 2;
+
+         if Camera.X < 0 then
+            Camera.X := 0;
+         end if;
+
+         if Camera.Y < 0 then
+            Camera.Y := 0;
+         end if;
+
+         if Camera.X > Level_Size.Width - Camera.Width then
+            Camera.X := Level_Size.Width - Camera.Width;
+         end if;
+
+         if Camera.Y > Level_Size.Height - Camera.Height then
+            Camera.Y := Level_Size.Height - Camera.Height;
+         end if;
 
          --  Clear screen
          Renderer.Set_Draw_Colour ((others => 255));
          Renderer.Clear;
 
-         --  Render graphics
-         Render_All (Renderer);
+         --  Draw the background
+         Renderer.Copy_From (BG_Texture, Camera);
+         --  Draw the dot
+         Dot.Render (Renderer,
+                     Dot_Texture,
+                     Dot.Get_Pos_X - Camera.X,
+                     Dot.Get_Pos_Y - Camera.Y);
 
          --  Update the screen
          Renderer.Present;
