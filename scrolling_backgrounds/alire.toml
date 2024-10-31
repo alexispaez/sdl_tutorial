@@ -1,4 +1,4 @@
-name = "gamepads_and_joysticks"
+name = "scrolling_backgrounds"
 description = ""
 version = "0.1.0-dev"
 
@@ -9,13 +9,13 @@ licenses = "MIT OR Apache-2.0 WITH LLVM-exception"
 website = ""
 tags = []
 
-executables = ["gamepads_and_joysticks"]
+executables = ["scrolling_backgrounds"]
 
 [[depends-on]]
 sdlada = "^2.5.124"
 
 [[pins]]
-sdlada = { path='../../sdlada' }
+sdlada = { url='https://github.com/ada-game-framework/sdlada.git' }
 
 [[depends-on]]
 sdlada_mixer = "^2.5.22"
