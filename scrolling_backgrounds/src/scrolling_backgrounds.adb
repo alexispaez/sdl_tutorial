@@ -45,7 +45,7 @@ procedure Scrolling_Backgrounds is
 
       Windows.Makers.Create
         (Win      => Window,
-         Title    => "SDL Tutorial - Scrolling",
+         Title    => "SDL Tutorial - Scrolling Backgrounds",
          Position => SDL.Natural_Coordinates'(X => 20, Y => 20),
          Size     => Screen_Size,
          Flags    => 0);
