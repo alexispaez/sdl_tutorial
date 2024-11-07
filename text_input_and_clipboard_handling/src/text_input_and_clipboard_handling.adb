@@ -1,7 +1,8 @@
 with Ada.Text_IO;
 with Ada.Strings.Unbounded;
+with SDL.Clipboard;
 with SDL.Events.Events;
-with SDL.Events.Keyboards;
+with SDL.Events.Keyboards; use SDL.Events.Keyboards;
 with SDL.Inputs.Keyboards;
 with SDL.TTFs;
 with SDL.TTFs.Makers;
@@ -19,6 +20,8 @@ use SDL.Video.Renderers;
 
 procedure Text_Input_And_Clipboard_Handling is
 
+   package ASU renames Ada.Strings.Unbounded;
+
    Width  : constant := 640;
    Height : constant := 480;
 
@@ -29,8 +32,8 @@ procedure Text_Input_And_Clipboard_Handling is
    Input_Text_Texture  : SDL.Video.Textures.Texture;
    Font                : SDL.TTFs.Fonts;
 
-   Input_Text          : Ada.Strings.Unbounded.Unbounded_String :=
-                           Ada.Strings.Unbounded.To_Unbounded_String ("Some Text");
+   Input_Text          : ASU.Unbounded_String :=
+                           ASU.To_Unbounded_String ("Some Text");
    Render_Text : Boolean := False;
 
    procedure Load_From_Rendered_Text
@@ -50,7 +53,7 @@ procedure Text_Input_And_Clipboard_Handling is
    begin
       Load_From_Rendered_Text (Prompt_Texture, "Enter text:", (others => 0));
       Load_From_Rendered_Text (Input_Text_Texture,
-                               Ada.Strings.Unbounded.To_String (Input_Text), (others => 0));
+                               ASU.To_String (Input_Text), (others => 0));
    end Load_Media;
 
    procedure Render (Renderer : in out SDL.Video.Renderers.Renderer;
@@ -69,30 +72,58 @@ procedure Text_Input_And_Clipboard_Handling is
    procedure Handle_Events is
       Finished : Boolean := False;
 
-      use type Ada.Strings.Unbounded.Unbounded_String;
+      use type ASU.Unbounded_String;
    begin
       loop
          while SDL.Events.Events.Poll (Event) loop
             case Event.Common.Event_Type is
                when SDL.Events.Quit =>
                   Finished := True;
+
+               when SDL.Events.Keyboards.Text_Input =>
+                  ASU.Append (Input_Text, To_Ada (Event.Text_Input.Text));
+                  Render_Text := True;
+
                when SDL.Events.Keyboards.Key_Down =>
                   case Event.Keyboard.Key_Sym.Key_Code is
+
                      when SDL.Events.Keyboards.Code_Escape =>
                         Finished := True;
+
                      when SDL.Events.Keyboards.Code_Backspace =>
-                        Input_Text := Ada.Strings.Unbounded.Head
-                          (Input_Text,
-                            Ada.Strings.Unbounded.Length (Input_Text) - 1);
-                        Render_Text := True;
-                     when SDL.Events.Keyboards.Code_Space =>
-                        Input_Text := Ada.Strings.Unbounded.To_Unbounded_String ("Pressed space");
-                        Render_Text := True;
+                        declare
+                           Text_Length : constant Natural :=
+                                           ASU.Length (Input_Text);
+                        begin
+                           if Text_Length > 0 then
+                              Input_Text := ASU.Head (Input_Text, Text_Length - 1);
+                              Render_Text := True;
+                           end if;
+                        end;
+
+                     when SDL.Events.Keyboards.Code_C =>
+                        if (SDL.Inputs.Keyboards.Get_Modifiers
+                          or SDL.Events.Keyboards.Modifier_Control) = SDL.Events.Keyboards.Modifier_Control
+                        then
+                           --  Copy text to clipboard
+                           SDL.Clipboard.Set (ASU.To_String (Input_Text));
+                        end if;
+
+                     when SDL.Events.Keyboards.Code_V =>
+                        if (SDL.Inputs.Keyboards.Get_Modifiers
+                          or SDL.Events.Keyboards.Modifier_Control) = SDL.Events.Keyboards.Modifier_Control
+                        then
+                           --  Copy text from clipboard into temporary buffer
+                           Input_Text := ASU.To_Unbounded_String (SDL.Clipboard.Get);
+                           Render_Text := True;
+                        end if;
+
                      when SDL.Events.Keyboards.Code_Delete =>
-                        Input_Text := Ada.Strings.Unbounded.To_Unbounded_String (" ");
+                        Input_Text := ASU.To_Unbounded_String ("");
                         Render_Text := True;
                      when others => null;
                   end case;
+
                when others => null;
             end case;
          end loop;
@@ -100,7 +131,8 @@ procedure Text_Input_And_Clipboard_Handling is
          if Render_Text then
             if Input_Text /= "" then
                Load_From_Rendered_Text (Input_Text_Texture,
-                                        Ada.Strings.Unbounded.To_String (Input_Text), (others => 0));
+                                        ASU.To_String (Input_Text),
+                                        (others => 0));
             else
                Load_From_Rendered_Text (Input_Text_Texture, " ", (others => 0));
                Render_Text := False;

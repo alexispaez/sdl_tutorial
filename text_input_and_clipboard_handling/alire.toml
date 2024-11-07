@@ -12,13 +12,10 @@ tags = []
 executables = ["text_input_and_clipboard_handling"]
 
 [[depends-on]]
-sdlada = "^2.5.124"
-
-[[pins]]
-sdlada = { url='https://github.com/ada-game-framework/sdlada.git' }
-
-[[depends-on]]
 sdlada_ttf = "~0.1.0-dev"
 
 [[pins]]
 sdlada_ttf = { url='https://github.com/ada-game-framework/sdlada_ttf.git' }
+
+[[pins]]
+sdlada = { path='../../sdlada' }
