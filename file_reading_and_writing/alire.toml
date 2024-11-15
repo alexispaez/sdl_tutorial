@@ -1,27 +1,21 @@
-name = "animated_sprites_and_vsync"
+name = "file_reading_and_writing"
 description = ""
 version = "0.1.0-dev"
 
-authors = ["Jose Alexis Paez"]
-maintainers = ["Jose Alexis Paez <jose.alexis.paez.thurgood@gmail.com>"]
+authors = ["Jose Alexis"]
+maintainers = ["Jose Alexis <jose.alexis.paez.thurgood@gmail.com>"]
 maintainers-logins = ["alexispaez"]
 licenses = "MIT OR Apache-2.0 WITH LLVM-exception"
 website = ""
 tags = []
 
-executables = ["animated_sprites_and_vsync"]
+executables = ["file_reading_and_writing"]
 
 [[depends-on]]
 sdlada = "^2.5.124"
 
 [[pins]]
-sdlada = { path='../../sdlada' }
-
-[[depends-on]]
-sdlada_mixer = "^2.5.22"
-
-[[pins]]
-sdlada_mixer = { url='https://github.com/ada-game-framework/sdlada_mixer.git' }
+sdlada = { url='https://github.com/ada-game-framework/sdlada.git' }
 
 [[depends-on]]
 sdlada_image = "~0.1.0-dev"
