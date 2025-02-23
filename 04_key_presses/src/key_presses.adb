@@ -1,4 +1,5 @@
-with Ada.Text_IO;
+with Ada.Exceptions;
+with Ada.Text_IO; use Ada.Text_IO;
 with SDL.Events.Events;
 with SDL.Events.Keyboards;
 with SDL.Video.Surfaces;
@@ -24,22 +25,23 @@ procedure Key_Presses is
    Window          : SDL.Video.Windows.Window;
    Event           : SDL.Events.Events.Events;
 
-   procedure Load_Media (Surfaces : in out Key_Press_Surfaces) is
-      Surface : SDL.Video.Surfaces.Surface;
+   function Initialise return Boolean is
    begin
-      SDL.Video.Surfaces.Makers.Create (Surface,
-                                        "../resources/press.bmp");
-      Surfaces (Default) := Surface;
-      SDL.Video.Surfaces.Makers.Create (Surface,
-                                        "../resources/up.bmp");
-      Surfaces (Up) :=  Surface;
-      SDL.Video.Surfaces.Makers.Create (Surfaces (Down),
-                                        "../resources/down.bmp");
-      SDL.Video.Surfaces.Makers.Create (Surfaces (Left),
-                                        "../resources/left.bmp");
-      SDL.Video.Surfaces.Makers.Create (Surfaces (Right),
-                                        "../resources/right.bmp");
-   end Load_Media;
+      if not SDL.Initialise (Flags => SDL.Enable_Screen) then
+         return False;
+      end if;
+
+      SDL.Video.Windows.Makers.Create
+        (Win      => Window,
+         Title    => "SDL Tutorial - Key Presses",
+         Position => SDL.Natural_Coordinates'(X => 20, Y => 20),
+         Size     => SDL.Positive_Sizes'(Width, Height),
+         Flags    => 0);
+
+      Window_Surface := Window.Get_Surface;
+
+      return True;
+   end Initialise;
 
    procedure Free_Media (Surfaces : in out Key_Press_Surfaces) is
    begin
@@ -48,18 +50,44 @@ procedure Key_Presses is
       end loop;
    end Free_Media;
 
+   procedure Close is
+   begin
+      Free_Media (Surfaces);
+
+      Window_Surface.Finalize;
+      Window.Finalize;
+      SDL.Finalise;
+   end Close;
+
+   procedure Load_Media (Surfaces : in out Key_Press_Surfaces) is
+   begin
+      SDL.Video.Surfaces.Makers.Create (Surfaces (Default),
+                                        "../resources/press.bmp");
+      SDL.Video.Surfaces.Makers.Create (Surfaces (Up),
+                                        "../resources/up.bmp");
+      SDL.Video.Surfaces.Makers.Create (Surfaces (Down),
+                                        "../resources/down.bmp");
+      SDL.Video.Surfaces.Makers.Create (Surfaces (Left),
+                                        "../resources/left.bmp");
+      SDL.Video.Surfaces.Makers.Create (Surfaces (Right),
+                                        "../resources/right.bmp");
+   end Load_Media;
+
    procedure Handle_Events is
       Finished : Boolean := False;
    begin
       loop
          while SDL.Events.Events.Poll (Event) loop
             case Event.Common.Event_Type is
+               --  User requested quit
                when SDL.Events.Quit =>
                   Finished := True;
                when SDL.Events.Keyboards.Key_Down =>
                   case Event.Keyboard.Key_Sym.Key_Code is
+                     --  Handle Escape key
                      when SDL.Events.Keyboards.Code_Escape =>
                         Finished := True;
+                        --  Handle direction keys
                      when SDL.Events.Keyboards.Code_Up =>
                         Current_Surface := Surfaces (Up);
                      when SDL.Events.Keyboards.Code_Down =>
@@ -82,18 +110,9 @@ procedure Key_Presses is
    end Handle_Events;
 
 begin
-   if not SDL.Initialise (Flags => SDL.Enable_Screen) then
+   if not Initialise then
       return;
    end if;
-
-   SDL.Video.Windows.Makers.Create
-     (Win      => Window,
-      Title    => "SDL Tutorial - Key Presses",
-      Position => SDL.Natural_Coordinates'(X => 20, Y => 20),
-      Size     => SDL.Positive_Sizes'(Width, Height),
-      Flags    => 0);
-
-   Window_Surface := Window.Get_Surface;
 
    Load_Media (Surfaces);
 
@@ -101,10 +120,14 @@ begin
 
    Handle_Events;
 
-   Free_Media (Surfaces);
-   Window_Surface.Finalize;
-   Window.Finalize;
-   SDL.Finalise;
+   Close;
 
-   Ada.Text_IO.Put_Line ("Process complete.");
+   Put_Line ("Process complete.");
+exception
+   when Event : others =>
+      Put_Line ("Process not completed.");
+      Put_Line ("Exception raised: " &
+                  Ada.Exceptions.Exception_Name (Event));
+      Put_Line ("Exception mesage: " &
+                  Ada.Exceptions.Exception_Message (Event));
 end Key_Presses;
