@@ -1,7 +1,8 @@
 pragma Ada_2022;
+with Ada.Exceptions;
 
 with Ada.Strings.UTF_Encoding;
-with Ada.Text_IO;
+with Ada.Text_IO; use Ada.Text_IO;
 with SDL.Events.Events;
 with SDL.Events.Keyboards;
 with SDL.Video.Surfaces;
@@ -20,16 +21,45 @@ procedure Optimized_Surface_Loading is
    Window_Surface : SDL.Video.Surfaces.Surface;
    Image_Surface  : SDL.Video.Surfaces.Surface;
 
+   function Initialise return Boolean is
+   begin
+      if not SDL.Initialise (Flags => SDL.Enable_Screen) then
+         return False;
+      end if;
+
+      SDL.Video.Windows.Makers.Create
+        (Win      => Window,
+         Title    => "SDL Tutorial - Optimized Surface Loading and Soft Stretching",
+         Position => SDL.Natural_Coordinates'(X => 20, Y => 20),
+         Size     => SDL.Positive_Sizes'(Width, Height),
+         Flags    => 0);
+
+      Window_Surface := Window.Get_Surface;
+
+      return True;
+
+   end Initialise;
+
+   procedure Close is
+   begin
+      Image_Surface.Finalize;
+      Window_Surface.Finalize;
+      Window.Finalize;
+      SDL.Finalise;
+   end Close;
+
    procedure Handle_Events is
       Finished : Boolean := False;
    begin
       loop
          while SDL.Events.Events.Poll (Event) loop
             case Event.Common.Event_Type is
+               --  User requested quit
                when SDL.Events.Quit =>
                   Finished := True;
                when SDL.Events.Keyboards.Key_Up =>
                   case Event.Keyboard.Key_Sym.Key_Code is
+                     --  Handle Escaoe key
                      when SDL.Events.Keyboards.Code_Escape =>
                         Finished := True;
                      when others => null;
@@ -62,27 +92,22 @@ procedure Optimized_Surface_Loading is
    end Load_Surface;
 
 begin
-   if not SDL.Initialise (Flags => SDL.Enable_Screen) then
+   if not Initialise then
       return;
    end if;
-
-   SDL.Video.Windows.Makers.Create
-     (Win      => Window,
-      Title    => "SDL Tutorial",
-      Position => SDL.Natural_Coordinates'(X => 20, Y => 20),
-      Size     => SDL.Positive_Sizes'(Width, Height),
-      Flags    => 0);
-
-   Window_Surface := Window.Get_Surface;
 
    Load_Surface (Image_Surface, Window_Surface, "../resources/stretch.bmp");
 
    Handle_Events;
 
-   Image_Surface.Finalize;
-   Window_Surface.Finalize;
-   Window.Finalize;
-   SDL.Finalise;
+   Close;
 
-   Ada.Text_IO.Put_Line ("Process completed.");
+   Put_Line ("Process completed.");
+exception
+   when Event : others =>
+      Put_Line ("Process not completed.");
+      Put_Line ("Exception raised: " &
+                  Ada.Exceptions.Exception_Name (Event));
+      Put_Line ("Exception mesage: " &
+                  Ada.Exceptions.Exception_Message (Event));
 end Optimized_Surface_Loading;
