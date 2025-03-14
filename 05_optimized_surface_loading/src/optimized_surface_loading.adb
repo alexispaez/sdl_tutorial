@@ -1,6 +1,6 @@
 pragma Ada_2022;
-with Ada.Exceptions;
 
+with Ada.Exceptions;
 with Ada.Strings.UTF_Encoding;
 with Ada.Text_IO; use Ada.Text_IO;
 with SDL.Events.Events;

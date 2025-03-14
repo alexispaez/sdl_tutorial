@@ -1,7 +1,8 @@
 pragma Ada_2022;
 
+with Ada.Exceptions;
 with Ada.Strings.UTF_Encoding;
-with Ada.Text_IO;
+with Ada.Text_IO; use Ada.Text_IO;
 with SDL.Events.Events;
 with SDL.Events.Keyboards;
 with SDL.Images;
@@ -44,6 +45,15 @@ procedure Extension_Libraries is
       return True;
 
    end Initialise;
+
+   procedure Close is
+   begin
+      Image_Surface.Finalize;
+      Window_Surface.Finalize;
+      Window.Finalize;
+      SDL.Images.Finalise;
+      SDL.Finalise;
+   end Close;
 
    procedure Handle_Events is
       Finished : Boolean := False;
@@ -97,11 +107,14 @@ begin
 
    Handle_Events;
 
-   Image_Surface.Finalize;
-   Window_Surface.Finalize;
-   Window.Finalize;
-   SDL.Images.Finalise;
-   SDL.Finalise;
+   Close;
 
-   Ada.Text_IO.Put_Line ("Process completed.");
+   Put_Line ("Process completed.");
+exception
+   when Event : others =>
+      Put_Line ("Process not completed.");
+      Put_Line ("Exception raised: " &
+                  Ada.Exceptions.Exception_Name (Event));
+      Put_Line ("Exception mesage: " &
+                  Ada.Exceptions.Exception_Message (Event));
 end Extension_Libraries;
