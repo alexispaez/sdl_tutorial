@@ -22,6 +22,29 @@ procedure Extension_Libraries is
    Window_Surface : SDL.Video.Surfaces.Surface;
    Image_Surface  : SDL.Video.Surfaces.Surface;
 
+   function Initialise return Boolean is
+   begin
+      if not SDL.Initialise (Flags => SDL.Enable_Screen) then
+         return False;
+      end if;
+
+      if not SDL.Images.Initialise (Flags => SDL.Images.Enable_PNG) then
+         return False;
+      end if;
+
+      SDL.Video.Windows.Makers.Create
+        (Win      => Window,
+         Title    => "SDL Tutorial - Extension Libraries and Loading Other Image Formats",
+         Position => SDL.Natural_Coordinates'(X => 20, Y => 20),
+         Size     => SDL.Positive_Sizes'(Width, Height),
+         Flags    => 0);
+
+      Window_Surface := Window.Get_Surface;
+
+      return True;
+
+   end Initialise;
+
    procedure Handle_Events is
       Finished : Boolean := False;
    begin
@@ -66,22 +89,9 @@ procedure Extension_Libraries is
    end Load_Surface;
 
 begin
-   if not SDL.Initialise (Flags => SDL.Enable_Screen) then
+   if not Initialise then
       return;
    end if;
-
-   if not SDL.Images.Initialise (Flags => SDL.Images.Enable_PNG) then
-      return;
-   end if;
-
-   SDL.Video.Windows.Makers.Create
-     (Win      => Window,
-      Title    => "SDL Tutorial",
-      Position => SDL.Natural_Coordinates'(X => 20, Y => 20),
-      Size     => SDL.Positive_Sizes'(Width, Height),
-      Flags    => 0);
-
-   Window_Surface := Window.Get_Surface;
 
    Load_Surface (Image_Surface, Window_Surface, "../resources/loaded.png");
 
