@@ -1,7 +1,8 @@
 pragma Ada_2022;
 
+with Ada.Exceptions;
 with Ada.Strings.UTF_Encoding;
-with Ada.Text_IO;
+with Ada.Text_IO; use Ada.Text_IO;
 with SDL.Events.Events;
 with SDL.Events.Keyboards;
 with SDL.Images;
@@ -26,15 +27,52 @@ procedure The_Viewport is
    Event          : SDL.Events.Events.Events;
    Texture        : SDL.Video.Textures.Texture;
    Renderer       : SDL.Video.Renderers.Renderer;
-   Top_Left_Viewport : constant SDL.Video.Rectangles.Rectangle :=
-     (0, 0, Width / 2, Height / 2);
-   Top_Right_Viewport : constant SDL.Video.Rectangles.Rectangle :=
-     (Width / 2, 0, Width / 2,  Height / 2);
-   Bottom_Viewport : constant SDL.Video.Rectangles.Rectangle :=
-     (0, Height / 2, Width,  Height / 2);
+
+   function Initialise return Boolean is
+   begin
+      if not SDL.Initialise (Flags => SDL.Enable_Screen) then
+         return False;
+      end if;
+
+      if not SDL.Images.Initialise (Flags => SDL.Images.Enable_PNG) then
+         return False;
+      end if;
+
+      SDL.Video.Windows.Makers.Create
+        (Win      => Window,
+         Title    => "SDL Tutorial - The Viewport",
+         Position => SDL.Natural_Coordinates'(X => 20, Y => 20),
+         Size     => SDL.Positive_Sizes'(Width, Height),
+         Flags    => 0);
+      SDL.Video.Renderers.Makers.Create
+        (Window => Window,
+         Rend   => Renderer,
+         Flags  => SDL.Video.Renderers.Accelerated);
+
+      Renderer.Set_Draw_Colour ((others => 255));
+
+      return True;
+
+   end Initialise;
+
+   procedure Close is
+   begin
+      Texture.Finalize;
+      Renderer.Finalize;
+      Window.Finalize;
+      SDL.Images.Finalise;
+      SDL.Finalise;
+   end Close;
 
    procedure Handle_Events is
       Finished : Boolean := False;
+
+      Top_Left_Viewport : constant SDL.Video.Rectangles.Rectangle :=
+        (0, 0, Width / 2, Height / 2);
+      Top_Right_Viewport : constant SDL.Video.Rectangles.Rectangle :=
+        (Width / 2, 0, Width / 2,  Height / 2);
+      Bottom_Viewport : constant SDL.Video.Rectangles.Rectangle :=
+        (0, Height / 2, Width,  Height / 2);
    begin
       loop
          while SDL.Events.Events.Poll (Event) loop
@@ -89,36 +127,22 @@ procedure The_Viewport is
    end Load_Texture;
 
 begin
-   if not SDL.Initialise (Flags => SDL.Enable_Screen) then
+   if not Initialise then
       return;
    end if;
-
-   if not SDL.Images.Initialise (Flags => SDL.Images.Enable_PNG) then
-      return;
-   end if;
-
-   SDL.Video.Windows.Makers.Create
-     (Win      => Window,
-      Title    => "SDL Tutorial",
-      Position => SDL.Natural_Coordinates'(X => 20, Y => 20),
-      Size     => SDL.Positive_Sizes'(Width, Height),
-      Flags    => 0);
-   SDL.Video.Renderers.Makers.Create
-     (Window => Window,
-      Rend   => Renderer,
-      Flags  => SDL.Video.Renderers.Accelerated);
-
-   Renderer.Set_Draw_Colour ((others => 255));
 
    Load_Texture (Texture, Renderer, "../resources/viewport.png");
 
    Handle_Events;
 
-   Texture.Finalize;
-   Renderer.Finalize;
-   Window.Finalize;
-   SDL.Images.Finalise;
-   SDL.Finalise;
+   Close;
 
-   Ada.Text_IO.Put_Line ("Process completed.");
+   Put_Line ("Process completed.");
+exception
+   when Event : others =>
+      Put_Line ("Process not completed.");
+      Put_Line ("Exception raised: " &
+                  Ada.Exceptions.Exception_Name (Event));
+      Put_Line ("Exception mesage: " &
+                  Ada.Exceptions.Exception_Message (Event));
 end The_Viewport;
