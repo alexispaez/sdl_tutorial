@@ -1,7 +1,8 @@
 pragma Ada_2022;
 
+with Ada.Exceptions;
 with Ada.Strings.UTF_Encoding;
-with Ada.Text_IO;
+with Ada.Text_IO; use Ada.Text_IO;
 with SDL;
 with SDL.Events.Events;
 with SDL.Events.Keyboards;
@@ -57,7 +58,7 @@ procedure Color_Keying is
          Texture.Get_Size.Width,
          Texture.Get_Size.Height);
    begin
-      Renderer.Copy (Texture, Render_Rectangle);
+      Renderer.Copy_To (Texture, Render_Rectangle);
    end Render_Texture;
 
    procedure Handle_Events is
@@ -105,7 +106,7 @@ begin
 
    SDL.Video.Windows.Makers.Create
      (Win      => Window,
-      Title    => "SDL Tutorial",
+      Title    => "SDL Tutorial - Color Keying",
       Position => SDL.Natural_Coordinates'(X => 20, Y => 20),
       Size     => SDL.Positive_Sizes'(Width, Height),
       Flags    => 0);
