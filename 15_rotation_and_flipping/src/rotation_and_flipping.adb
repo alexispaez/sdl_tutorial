@@ -1,14 +1,15 @@
 pragma Ada_2022;
 
+with Ada.Exceptions;
 with Ada.Strings.UTF_Encoding;
-with Ada.Text_IO;
+with Ada.Text_IO; use Ada.Text_IO;
 with SDL;
 with SDL.Events.Events;
 with SDL.Events.Keyboards;
 with SDL.Images;
 with SDL.Images.IO;
 with SDL.Video.Rectangles;
-with SDL.Video.Renderers;
+with SDL.Video.Renderers; use SDL.Video.Renderers;
 with SDL.Video.Renderers.Makers;
 with SDL.Video.Surfaces;
 with SDL.Video.Textures;
@@ -27,6 +28,34 @@ procedure Rotation_And_Flipping is
    Renderer      : SDL.Video.Renderers.Renderer;
    Event         : SDL.Events.Events.Events;
    Arrow_Texture : SDL.Video.Textures.Texture;
+
+   function Initialise return Boolean is
+   begin
+      if not SDL.Initialise (Flags => SDL.Enable_Screen) then
+         return False;
+      end if;
+
+      if not SDL.Images.Initialise (Flags => SDL.Images.Enable_PNG) then
+         return False;
+      end if;
+
+      SDL.Video.Windows.Makers.Create
+        (Win      => Window,
+         Title    => "SDL Tutorial - Rotation and Flipping",
+         Position => SDL.Natural_Coordinates'(X => 20, Y => 20),
+         Size     => SDL.Positive_Sizes'(Width, Height),
+         Flags    => 0);
+      SDL.Video.Renderers.Makers.Create
+        (Window => Window,
+         Rend   => Renderer,
+         Flags  => SDL.Video.Renderers.Accelerated or
+           SDL.Video.Renderers.Present_V_Sync);
+
+      Renderer.Set_Draw_Colour ((others => 255));
+
+      return True;
+
+   end Initialise;
 
    procedure Load_Media
      (Texture   : in out SDL.Video.Textures.Texture;
@@ -47,6 +76,20 @@ procedure Rotation_And_Flipping is
 
    end Load_Media;
 
+   procedure Free_Media is
+   begin
+      Arrow_Texture.Finalize;
+   end Free_Media;
+
+   procedure Close is
+   begin
+      Free_Media;
+
+      Window.Finalize;
+      SDL.Images.Finalise;
+      SDL.Finalise;
+   end Close;
+
    procedure Render
      (Renderer         : in out SDL.Video.Renderers.Renderer;
       Texture          : in out SDL.Video.Textures.Texture;
@@ -57,11 +100,6 @@ procedure Rotation_And_Flipping is
 
       use type Interfaces.C.int;
 
-      From_Rectangle : constant SDL.Video.Rectangles.Rectangle :=
-        (0,
-         0,
-         Texture.Get_Size.Width,
-         Texture.Get_Size.Height);
       To_Rectangle : constant SDL.Video.Rectangles.Rectangle :=
         (X,
          Y,
@@ -71,8 +109,7 @@ procedure Rotation_And_Flipping is
         (Texture.Get_Size.Width / 2,
          Texture.Get_Size.Height / 2);
    begin
-      Renderer.Copy_to (Texture,
-                     --  From_Rectangle,
+      Renderer.Copy_To (Texture,
                      To_Rectangle,
                      Angle,
                      Center_Point,
@@ -131,27 +168,9 @@ procedure Rotation_And_Flipping is
    end Handle_Events;
 
 begin
-   if not SDL.Initialise (Flags => SDL.Enable_Screen) then
+   if not Initialise then
       return;
    end if;
-
-   if not SDL.Images.Initialise (Flags => SDL.Images.Enable_PNG) then
-      return;
-   end if;
-
-   SDL.Video.Windows.Makers.Create
-     (Win      => Window,
-      Title    => "SDL Tutorial",
-      Position => SDL.Natural_Coordinates'(X => 20, Y => 20),
-      Size     => SDL.Positive_Sizes'(Width, Height),
-      Flags    => 0);
-   SDL.Video.Renderers.Makers.Create
-     (Window => Window,
-      Rend   => Renderer,
-      Flags  => SDL.Video.Renderers.Accelerated or
-        SDL.Video.Renderers.Present_V_Sync);
-
-   Renderer.Set_Draw_Colour ((others => 255));
 
    Load_Media (Arrow_Texture,
                Renderer,
@@ -159,9 +178,14 @@ begin
 
    Handle_Events;
 
-   Window.Finalize;
-   SDL.Images.Finalise;
-   SDL.Finalise;
+   Close;
 
-   Ada.Text_IO.Put_Line ("Process completed.");
+   Put_Line ("Process completed.");
+exception
+   when Event : others =>
+      Put_Line ("Process not completed.");
+      Put_Line ("Exception raised: " &
+                  Ada.Exceptions.Exception_Name (Event));
+      Put_Line ("Exception mesage: " &
+                  Ada.Exceptions.Exception_Message (Event));
 end Rotation_And_Flipping;

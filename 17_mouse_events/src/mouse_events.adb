@@ -1,13 +1,13 @@
 pragma Ada_2022;
 
-with Ada.Text_IO;
+with Ada.Exceptions;
+with Ada.Text_IO; use Ada.Text_IO;
 with Button;
 with SDL.Events.Events;
 with SDL.Events.Keyboards;
 with SDL.Events.Mice;
 with SDL.Images;
 with SDL.Images.IO;
-with SDL.TTFs.Makers;
 with SDL.Video.Renderers.Makers;
 with SDL.Video.Surfaces;
 with SDL.Video.Textures;
@@ -25,24 +25,37 @@ procedure Mouse_Events is
    Window   : SDL.Video.Windows.Window;
    Renderer : SDL.Video.Renderers.Renderer;
    Texture  : SDL.Video.Textures.Texture;
-   Font     : SDL.TTFs.Fonts;
 
    Total_Buttons : constant := 4;
    Buttons       : array (1 .. Total_Buttons) of Button.Button;
    Sprite_Clips  : Button.Sprite_Clips_Array;
 
-   --  procedure Load_From_Rendered_Text
-   --    (Texture : in out SDL.Video.Textures.Texture;
-   --     Text    : String;
-   --     Colour  : SDL.Video.Palettes.Colour) is
-   --     Text_Surface : SDL.Video.Surfaces.Surface;
-   --  begin
-   --     Text_Surface := Font.Render_Solid (Text, Colour);
-   --
-   --     SDL.Video.Textures.Makers.Create (Texture, Renderer, Text_Surface);
-   --
-   --     Text_Surface.Finalize;
-   --  end Load_From_Rendered_Text;
+   function Initialise return Boolean is
+   begin
+      if not SDL.Initialise (Flags => SDL.Enable_Screen) then
+         return False;
+      end if;
+
+      if not SDL.Images.Initialise (Flags => SDL.Images.Enable_PNG) then
+         return False;
+      end if;
+
+      SDL.Video.Windows.Makers.Create
+        (Win      => Window,
+         Title    => "SDL Tutorial - Mouse Events",
+         Position => SDL.Natural_Coordinates'(X => 20, Y => 20),
+         Size     => SDL.Positive_Sizes'(Screen_Width, Screen_Height),
+         Flags    => 0);
+
+      SDL.Video.Renderers.Makers.Create
+        (Window => Window,
+         Rend   => Renderer,
+         Flags  => SDL.Video.Renderers.Accelerated or
+           SDL.Video.Renderers.Present_V_Sync);
+
+      return True;
+
+   end Initialise;
 
    procedure Load_Texture
      (Texture   : in out SDL.Video.Textures.Texture;
@@ -84,18 +97,19 @@ procedure Mouse_Events is
       Buttons (4).Set_Position (Screen_Width - Button_Width, Screen_Height - Button_Height);
    end Load_Media;
 
-   --  procedure Render (Renderer : in out SDL.Video.Renderers.Renderer;
-   --                    Texture  : in out SDL.Video.Textures.Texture;
-   --                    X        : SDL.Dimension;
-   --                    Y        : SDL.Dimension) is
-   --     Render_Rectangle : constant SDL.Video.Rectangles.Rectangle :=
-   --                          (X,
-   --                           Y,
-   --                           Texture.Get_Size.Width,
-   --                           Texture.Get_Size.Height);
-   --  begin
-   --     Renderer.Copy (Texture, Render_Rectangle);
-   --  end Render;
+   procedure Free_Media is
+   begin
+      Texture.Finalize;
+   end Free_Media;
+
+   procedure Close is
+   begin
+      Free_Media;
+
+      Window.Finalize;
+      SDL.Images.Finalise;
+      SDL.Finalise;
+   end Close;
 
    procedure Handle_Events is
       Finished : Boolean := False;
@@ -137,42 +151,22 @@ procedure Mouse_Events is
    end Handle_Events;
 
 begin
-   if not SDL.Initialise (Flags => SDL.Enable_Screen) then
+   if not Initialise then
       return;
    end if;
-
-   if not SDL.TTFs.Initialise then
-      return;
-   end if;
-
-   if not SDL.Images.Initialise (Flags => SDL.Images.Enable_PNG) then
-      return;
-   end if;
-
-   SDL.Video.Windows.Makers.Create
-     (Win      => Window,
-      Title    => "SDL Tutorial",
-      Position => SDL.Natural_Coordinates'(X => 20, Y => 20),
-      Size     => SDL.Positive_Sizes'(Screen_Width, Screen_Height),
-      Flags    => 0);
-
-   SDL.Video.Renderers.Makers.Create
-     (Window => Window,
-      Rend   => Renderer,
-      Flags  => SDL.Video.Renderers.Accelerated or
-        SDL.Video.Renderers.Present_V_Sync);
-
-   SDL.TTFs.Makers.Create (Font, "../resources//lazy.ttf", 28);
 
    Load_Media;
 
    Handle_Events;
 
-   SDL.TTFs.Quit;
-   Window.Finalize;
-   SDL.Images.Finalise;
-   SDL.Finalise;
+   Close;
 
-   Ada.Text_IO.Put_Line ("Process completed.");
-
+   Put_Line ("Process completed.");
+exception
+   when Event : others =>
+      Put_Line ("Process not completed.");
+      Put_Line ("Exception raised: " &
+                  Ada.Exceptions.Exception_Name (Event));
+      Put_Line ("Exception mesage: " &
+                  Ada.Exceptions.Exception_Message (Event));
 end Mouse_Events;

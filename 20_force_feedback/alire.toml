@@ -30,4 +30,4 @@ sdlada_ttf = "~0.1.0-dev"
 sdlada_ttf = { url='https://github.com/ada-game-framework/sdlada_ttf.git' }
 
 [[pins]]
-sdlada = { path='../../sdlada' }
+sdlada = { url='https://github.com/ada-game-framework/sdlada.git' }

@@ -15,7 +15,7 @@ executables = ["timing"]
 sdlada = "^2.5.124"
 
 [[pins]]
-sdlada = { path='../sdlada' }
+sdlada = { url='https://github.com/ada-game-framework/sdlada.git' }
 
 [[depends-on]]
 sdlada_image = "~0.1.0-dev"

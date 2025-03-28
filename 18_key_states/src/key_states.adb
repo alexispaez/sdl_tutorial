@@ -1,6 +1,7 @@
 pragma Ada_2022;
 
-with Ada.Text_IO;
+with Ada.Exceptions;
+with Ada.Text_IO; use Ada.Text_IO;
 with SDL.Events.Events;
 with SDL.Events.Keyboards;
 with SDL.Inputs.Keyboards;
@@ -27,6 +28,25 @@ procedure Key_States is
    Window          : SDL.Video.Windows.Window;
    Event           : SDL.Events.Events.Events;
 
+   function Initialise return Boolean is
+   begin
+      if not SDL.Initialise (Flags => SDL.Enable_Screen) then
+         return False;
+      end if;
+
+      SDL.Video.Windows.Makers.Create
+        (Win      => Window,
+         Title    => "SDL Tutorial - Key States",
+         Position => SDL.Natural_Coordinates'(X => 20, Y => 20),
+         Size     => SDL.Positive_Sizes'(Width, Height),
+         Flags    => 0);
+
+      Window_Surface := Window.Get_Surface;
+
+      return True;
+
+   end Initialise;
+
    procedure Load_Media (Surfaces : in out Key_Press_Surfaces) is
       Surface : SDL.Video.Surfaces.Surface;
    begin
@@ -50,6 +70,15 @@ procedure Key_States is
          S.Finalize;
       end loop;
    end Free_Media;
+
+   procedure Close is
+   begin
+      Free_Media (Surfaces);
+
+      Window_Surface.Finalize;
+      Window.Finalize;
+      SDL.Finalise;
+   end Close;
 
    procedure Handle_Events is
       Finished : Boolean := False;
@@ -94,29 +123,25 @@ procedure Key_States is
    end Handle_Events;
 
 begin
-   if not SDL.Initialise (Flags => SDL.Enable_Screen) then
+   if not Initialise then
       return;
    end if;
 
-   SDL.Video.Windows.Makers.Create
-     (Win      => Window,
-      Title    => "SDL Tutorial - Key Presses",
-      Position => SDL.Natural_Coordinates'(X => 20, Y => 20),
-      Size     => SDL.Positive_Sizes'(Width, Height),
-      Flags    => 0);
-
-   Window_Surface := Window.Get_Surface;
-
    Load_Media (Surfaces);
 
+   --  Set default image to display
    Current_Surface := Surfaces (Default);
 
    Handle_Events;
 
-   Free_Media (Surfaces);
-   Window_Surface.Finalize;
-   Window.Finalize;
-   SDL.Finalise;
+   Close;
 
-   Ada.Text_IO.Put_Line ("Process complete.");
+   Put_Line ("Process complete.");
+exception
+   when Event : others =>
+      Put_Line ("Process not completed.");
+      Put_Line ("Exception raised: " &
+                  Ada.Exceptions.Exception_Name (Event));
+      Put_Line ("Exception mesage: " &
+                  Ada.Exceptions.Exception_Message (Event));
 end Key_States;
