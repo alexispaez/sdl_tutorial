@@ -40,9 +40,36 @@ procedure Optimized_Surface_Loading is
 
    end Initialise;
 
-   procedure Close is
+   procedure Load_Surface
+     (Surface        : in out SDL.Video.Surfaces.Surface;
+      Screen_Surface : in out SDL.Video.Surfaces.Surface;
+      File_Name : UTF_Strings.UTF_String) is
+      Optimized_Surface : SDL.Video.Surfaces.Surface;
+      Loaded_Surface    : SDL.Video.Surfaces.Surface;
+   begin
+      SDL.Video.Surfaces.Makers.Create (Loaded_Surface, File_Name);
+      SDL.Video.Surfaces.Makers.Convert
+        (Optimized_Surface,
+         Loaded_Surface,
+         Screen_Surface.Pixel_Format);
+      Surface := Optimized_Surface;
+      Loaded_Surface.Finalize;
+   end Load_Surface;
+
+   procedure Load_Media is
+   begin
+      Load_Surface (Image_Surface, Window_Surface, "../resources/stretch.bmp");
+   end Load_Media;
+
+   procedure Free_Media is
    begin
       Image_Surface.Finalize;
+   end Free_Media;
+
+   procedure Close is
+   begin
+      Free_Media;
+
       Window_Surface.Finalize;
       Window.Finalize;
       SDL.Finalise;
@@ -75,28 +102,12 @@ procedure Optimized_Surface_Loading is
       end loop;
    end Handle_Events;
 
-   procedure Load_Surface
-     (Surface        : in out SDL.Video.Surfaces.Surface;
-      Screen_Surface : in out SDL.Video.Surfaces.Surface;
-      File_Name : UTF_Strings.UTF_String) is
-      Optimized_Surface : SDL.Video.Surfaces.Surface;
-      Loaded_Surface    : SDL.Video.Surfaces.Surface;
-   begin
-      SDL.Video.Surfaces.Makers.Create (Loaded_Surface, File_Name);
-      SDL.Video.Surfaces.Makers.Convert
-        (Optimized_Surface,
-         Loaded_Surface,
-         Screen_Surface.Pixel_Format);
-      Surface := Optimized_Surface;
-      Loaded_Surface.Finalize;
-   end Load_Surface;
-
 begin
    if not Initialise then
       return;
    end if;
 
-   Load_Surface (Image_Surface, Window_Surface, "../resources/stretch.bmp");
+   Load_Media;
 
    Handle_Events;
 

@@ -1,7 +1,8 @@
 pragma Ada_2022;
 
+with Ada.Exceptions;
 with Ada.Strings.UTF_Encoding;
-with Ada.Text_IO;
+with Ada.Text_IO; use Ada.Text_IO;
 with SDL;
 with SDL.Events.Events;
 with SDL.Events.Keyboards;
@@ -30,6 +31,33 @@ procedure Clip_Rendering_And_Sprite_Sheets is
    Sprite_Clips         : Sprite_Clip_Array;
    Renderer             : SDL.Video.Renderers.Renderer;
 
+   function Initialise return Boolean is
+   begin
+      if not SDL.Initialise (Flags => SDL.Enable_Screen) then
+         return False;
+      end if;
+
+      if not SDL.Images.Initialise (Flags => SDL.Images.Enable_PNG) then
+         return False;
+      end if;
+
+      SDL.Video.Windows.Makers.Create
+        (Win      => Window,
+         Title    => "SDL Tutorial - Clip Rendering and Sprite Sheets",
+         Position => SDL.Natural_Coordinates'(X => 20, Y => 20),
+         Size     => SDL.Positive_Sizes'(Width, Height),
+         Flags    => 0);
+      SDL.Video.Renderers.Makers.Create
+        (Window => Window,
+         Rend   => Renderer,
+         Flags  => SDL.Video.Renderers.Accelerated);
+
+      Renderer.Set_Draw_Colour ((others => 255));
+
+      return True;
+
+   end Initialise;
+
    procedure Load_Media
      (Texture   : in out SDL.Video.Textures.Texture;
       Renderer  : SDL.Video.Renderers.Renderer;
@@ -54,6 +82,21 @@ procedure Clip_Rendering_And_Sprite_Sheets is
       Sprite_Clips (3) := (0, 100, 100, 100);
       Sprite_Clips (4) := (100, 100, 100, 100);
    end Load_Media;
+
+   procedure Free_Media is
+   begin
+      Sprite_Sheet_Texture.Finalize;
+   end Free_Media;
+
+   procedure Close is
+   begin
+
+      Free_Media;
+
+      Window.Finalize;
+      SDL.Images.Finalise;
+      SDL.Finalise;
+   end Close;
 
    procedure Render_Texture
      (Renderer         : in out SDL.Video.Renderers.Renderer;
@@ -126,26 +169,9 @@ procedure Clip_Rendering_And_Sprite_Sheets is
    end Handle_Events;
 
 begin
-   if not SDL.Initialise (Flags => SDL.Enable_Screen) then
+   if not Initialise then
       return;
    end if;
-
-   if not SDL.Images.Initialise (Flags => SDL.Images.Enable_PNG) then
-      return;
-   end if;
-
-   SDL.Video.Windows.Makers.Create
-     (Win      => Window,
-      Title    => "SDL Tutorial",
-      Position => SDL.Natural_Coordinates'(X => 20, Y => 20),
-      Size     => SDL.Positive_Sizes'(Width, Height),
-      Flags    => 0);
-   SDL.Video.Renderers.Makers.Create
-     (Window => Window,
-      Rend   => Renderer,
-      Flags  => SDL.Video.Renderers.Accelerated);
-
-   Renderer.Set_Draw_Colour ((others => 255));
 
    Load_Media (Sprite_Sheet_Texture,
                Renderer,
@@ -154,9 +180,14 @@ begin
 
    Handle_Events;
 
-   Window.Finalize;
-   SDL.Images.Finalise;
-   SDL.Finalise;
+   Close;
 
-   Ada.Text_IO.Put_Line ("Process completed.");
+   Put_Line ("Process completed.");
+exception
+   when Event : others =>
+      Put_Line ("Process not completed.");
+      Put_Line ("Exception raised: " &
+                  Ada.Exceptions.Exception_Name (Event));
+      Put_Line ("Exception mesage: " &
+                  Ada.Exceptions.Exception_Message (Event));
 end Clip_Rendering_And_Sprite_Sheets;

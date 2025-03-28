@@ -53,14 +53,41 @@ procedure Texture_Loading_And_Rendering is
 
    end Initialise;
 
-   procedure Close is
+   procedure Load_Texture
+     (Texture   : in out SDL.Video.Textures.Texture;
+      Renderer  : SDL.Video.Renderers.Renderer;
+      File_Name : UTF_Strings.UTF_String) is
+      Loaded_Surface    : SDL.Video.Surfaces.Surface;
+   begin
+      SDL.Images.IO.Create (Loaded_Surface, File_Name);
+      SDL.Video.Textures.Makers.Create
+        (Texture,
+         Renderer,
+         Loaded_Surface);
+
+      Loaded_Surface.Finalize;
+   end Load_Texture;
+
+   procedure Load_Media is
+   begin
+      Load_Texture (Texture, Renderer, "../resources/texture.png");
+   end Load_Media;
+
+   procedure Free_Media is
    begin
       Texture.Finalize;
+   end Free_Media;
+
+   procedure Close is
+   begin
+      Free_Media;
+
       Renderer.Finalize;
       Window.Finalize;
       SDL.Images.Finalise;
       SDL.Finalise;
    end Close;
+
 
    procedure Handle_Events is
       Finished : Boolean := False;
@@ -88,27 +115,12 @@ procedure Texture_Loading_And_Rendering is
       end loop;
    end Handle_Events;
 
-   procedure Load_Texture
-     (Texture   : in out SDL.Video.Textures.Texture;
-      Renderer  : SDL.Video.Renderers.Renderer;
-      File_Name : UTF_Strings.UTF_String) is
-      Loaded_Surface    : SDL.Video.Surfaces.Surface;
-   begin
-      SDL.Images.IO.Create (Loaded_Surface, File_Name);
-      SDL.Video.Textures.Makers.Create
-        (Texture,
-         Renderer,
-         Loaded_Surface);
-
-      Loaded_Surface.Finalize;
-   end Load_Texture;
-
 begin
    if not Initialise then
       return;
    end if;
 
-   Load_Texture (Texture, Renderer, "../resources/texture.png");
+   Load_Media;
 
    Handle_Events;
 

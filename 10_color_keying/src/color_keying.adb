@@ -29,6 +29,33 @@ procedure Color_Keying is
    Background_Texture : SDL.Video.Textures.Texture;
    Renderer       : SDL.Video.Renderers.Renderer;
 
+   function Initialise return Boolean is
+   begin
+      if not SDL.Initialise (Flags => SDL.Enable_Screen) then
+         return False;
+      end if;
+
+      if not SDL.Images.Initialise (Flags => SDL.Images.Enable_PNG) then
+         return False;
+      end if;
+
+      SDL.Video.Windows.Makers.Create
+        (Win      => Window,
+         Title    => "SDL Tutorial - Color Keying",
+         Position => SDL.Natural_Coordinates'(X => 20, Y => 20),
+         Size     => SDL.Positive_Sizes'(Width, Height),
+         Flags    => 0);
+      SDL.Video.Renderers.Makers.Create
+        (Window => Window,
+         Rend   => Renderer,
+         Flags  => SDL.Video.Renderers.Accelerated);
+
+      Renderer.Set_Draw_Colour ((others => 255));
+
+      return True;
+
+   end Initialise;
+
    procedure Load_Texture
      (Texture   : in out SDL.Video.Textures.Texture;
       Renderer  : SDL.Video.Renderers.Renderer;
@@ -46,6 +73,26 @@ procedure Color_Keying is
 
       Loaded_Surface.Finalize;
    end Load_Texture;
+
+   procedure Load_Media is
+   begin
+      Load_Texture (Foo_Texture, Renderer, "../resources/foo.png");
+      Load_Texture (Background_Texture, Renderer, "../resources/background.png");
+   end Load_Media;
+
+   procedure Free_Media is
+   begin
+      Foo_Texture.Finalize;
+      Background_Texture.Finalize;
+   end Free_Media;
+
+   procedure Close is
+   begin
+      Renderer.Finalize;
+      Window.Finalize;
+      SDL.Images.Finalise;
+      SDL.Finalise;
+   end Close;
 
    procedure Render_Texture
      (Renderer : in out SDL.Video.Renderers.Renderer;
@@ -96,37 +143,22 @@ procedure Color_Keying is
    end Handle_Events;
 
 begin
-   if not SDL.Initialise (Flags => SDL.Enable_Screen) then
+   if not Initialise then
       return;
    end if;
 
-   if not SDL.Images.Initialise (Flags => SDL.Images.Enable_PNG) then
-      return;
-   end if;
-
-   SDL.Video.Windows.Makers.Create
-     (Win      => Window,
-      Title    => "SDL Tutorial - Color Keying",
-      Position => SDL.Natural_Coordinates'(X => 20, Y => 20),
-      Size     => SDL.Positive_Sizes'(Width, Height),
-      Flags    => 0);
-   SDL.Video.Renderers.Makers.Create
-     (Window => Window,
-      Rend   => Renderer,
-      Flags  => SDL.Video.Renderers.Accelerated);
-
-   Renderer.Set_Draw_Colour ((others => 255));
-
-   Load_Texture (Foo_Texture, Renderer, "../resources/foo.png");
-   Load_Texture (Background_Texture, Renderer, "../resources/background.png");
+   Load_Media;
 
    Handle_Events;
 
-   Foo_Texture.Finalize;
-   Renderer.Finalize;
-   Window.Finalize;
-   SDL.Images.Finalise;
-   SDL.Finalise;
+   Close;
 
-   Ada.Text_IO.Put_Line ("Process completed.");
+   Put_Line ("Process completed.");
+exception
+   when Event : others =>
+      Put_Line ("Process not completed.");
+      Put_Line ("Exception raised: " &
+                  Ada.Exceptions.Exception_Name (Event));
+      Put_Line ("Exception mesage: " &
+                  Ada.Exceptions.Exception_Message (Event));
 end Color_Keying;

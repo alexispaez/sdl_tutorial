@@ -15,7 +15,7 @@ executables = ["clip_rendering_and_sprite_sheets"]
 sdlada = "^2.5.124"
 
 [[pins]]
-sdlada = { path='../sdlada' }
+sdlada = { url='https://github.com/ada-game-framework/sdlada.git' }
 
 [[depends-on]]
 sdlada_mixer = "^2.5.22"
