@@ -1,10 +1,11 @@
 pragma Ada_2022;
 
+with Ada.Exceptions;
 with Ada.Numerics; use Ada.Numerics;
 with Ada.Numerics.Long_Elementary_Functions;
 use Ada.Numerics.Long_Elementary_Functions;
 with Ada.Strings.UTF_Encoding;
-with Ada.Text_IO;
+with Ada.Text_IO; use Ada.Text_IO;
 with SDL; use SDL;
 with SDL.Events.Events;
 with SDL.Events.Joysticks; use SDL.Events.Joysticks;
@@ -37,6 +38,54 @@ procedure Gamepads_And_Joysticks is
    Joystick          : SDL.Inputs.Joysticks.Joystick;
    Joystick_Instance : SDL.Inputs.Joysticks.Instances;
 
+   function Initialise return Boolean is
+   begin
+      if not SDL.Initialise (Flags => SDL.Enable_Screen or
+                               SDL.Enable_Joystick)
+      then
+         return False;
+      end if;
+
+      SDL.Hints.Set (SDL.Hints.Render_Scale_Quality, "1");
+
+      --  Check for the presence of joysticks
+      if SDL.Inputs.Joysticks.Total < 1 then
+         Put_Line ("No joysticks connected! Exiting.");
+
+         return False;
+      else
+         Put_Line ("Found " &
+                     SDL.Inputs.Joysticks.Total'Image &
+                     " joysticks.");
+      end if;
+
+      --  Open the first joystick
+      SDL.Inputs.Joysticks.Makers.Create (1, Joystick);
+      Joystick_Instance := SDL.Inputs.Joysticks.Instance (Joystick);
+
+      if not SDL.Images.Initialise (Flags => SDL.Images.Enable_PNG) then
+         return False;
+      end if;
+
+      SDL.Video.Windows.Makers.Create
+        (Win      => Window,
+         Title    => "SDL Tutorial - Gamepads and Joysticks",
+         Position => SDL.Natural_Coordinates'(X => 20, Y => 20),
+         Size     => SDL.Positive_Sizes'(Width, Height),
+         Flags    => SDL.Video.Windows.Shown);
+
+      SDL.Video.Renderers.Makers.Create
+        (Window => Window,
+         Rend   => Renderer,
+         Flags  => SDL.Video.Renderers.Accelerated or
+           SDL.Video.Renderers.Present_V_Sync);
+
+      Renderer.Set_Draw_Colour ((others => 255));
+
+      return True;
+
+   end Initialise;
+
    procedure Load_Media
      (Texture   : in out SDL.Video.Textures.Texture;
       Renderer  : SDL.Video.Renderers.Renderer;
@@ -55,6 +104,22 @@ procedure Gamepads_And_Joysticks is
       Loaded_Surface.Finalize;
 
    end Load_Media;
+
+   procedure Free_Media is
+   begin
+      Arrow_Texture.Finalize;
+   end Free_Media;
+
+   procedure Close is
+   begin
+      Free_Media;
+
+      Joystick.Finalize;
+
+      Window.Finalize;
+      SDL.Images.Finalise;
+      SDL.Finalise;
+   end Close;
 
    procedure Render
      (Renderer         : in out SDL.Video.Renderers.Renderer;
@@ -80,7 +145,6 @@ procedure Gamepads_And_Joysticks is
                      Angle,
                      Center_Point,
                      Flip_Type);
-
    end Render;
 
    procedure Handle_Events is
@@ -168,45 +232,9 @@ procedure Gamepads_And_Joysticks is
    end Handle_Events;
 
 begin
-   if not SDL.Initialise (Flags => SDL.Enable_Screen or
-                            SDL.Enable_Joystick)
-   then
+   if not Gamepads_And_Joysticks.Initialise then
       return;
    end if;
-
-   SDL.Hints.Set (SDL.Hints.Render_Scale_Quality, "1");
-
-   --  Check for the presence of joysticks
-   if SDL.Inputs.Joysticks.Total < 1 then
-      Ada.Text_IO.Put_Line ("No joysticks connected! Exiting.");
-      return;
-   else
-      Ada.Text_IO.Put_Line ("Found " &
-                              SDL.Inputs.Joysticks.Total'Image &
-                           " joysticks.");
-   end if;
-   --  Open the first joystick
-   SDL.Inputs.Joysticks.Makers.Create (1, Joystick);
-   Joystick_Instance := SDL.Inputs.Joysticks.Instance (Joystick);
-
-   if not SDL.Images.Initialise (Flags => SDL.Images.Enable_PNG) then
-      return;
-   end if;
-
-   SDL.Video.Windows.Makers.Create
-     (Win      => Window,
-      Title    => "SDL Tutorial",
-      Position => SDL.Natural_Coordinates'(X => 20, Y => 20),
-      Size     => SDL.Positive_Sizes'(Width, Height),
-      Flags    => SDL.Video.Windows.Shown);
-
-   SDL.Video.Renderers.Makers.Create
-     (Window => Window,
-      Rend   => Renderer,
-      Flags  => SDL.Video.Renderers.Accelerated or
-        SDL.Video.Renderers.Present_V_Sync);
-
-   Renderer.Set_Draw_Colour ((others => 255));
 
    Load_Media (Arrow_Texture,
                Renderer,
@@ -214,9 +242,14 @@ begin
 
    Handle_Events;
 
-   Window.Finalize;
-   SDL.Images.Finalise;
-   SDL.Finalise;
+   Close;
 
-   Ada.Text_IO.Put_Line ("Process completed.");
+   Put_Line ("Process completed.");
+exception
+   when Event : others =>
+      Put_Line ("Process not completed.");
+      Put_Line ("Exception raised: " &
+                  Ada.Exceptions.Exception_Name (Event));
+      Put_Line ("Exception mesage: " &
+                  Ada.Exceptions.Exception_Message (Event));
 end Gamepads_And_Joysticks;

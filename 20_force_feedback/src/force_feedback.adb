@@ -1,5 +1,6 @@
 pragma Ada_2022;
 
+with Ada.Exceptions;
 with Ada.Numerics; use Ada.Numerics;
 with Ada.Numerics.Long_Elementary_Functions;
 use Ada.Numerics.Long_Elementary_Functions;
@@ -39,6 +40,81 @@ procedure Force_Feedback is
    Joystick_Instance : SDL.Inputs.Joysticks.Instances;
    Game_Controller   : SDL.Inputs.Joysticks.Game_Controllers.Game_Controller;
 
+   function Initialise return Boolean is
+   begin
+
+      if not SDL.Initialise (Flags => SDL.Enable_Screen
+                             or SDL.Enable_Joystick
+                             or SDL.Enable_Haptic
+                             or SDL.Enable_Game_Controller)
+      then
+         return False;
+      end if;
+
+      SDL.Hints.Set (SDL.Hints.Render_Scale_Quality, "1");
+
+      --  Check for the presence of joysticks
+      if SDL.Inputs.Joysticks.Total < 1 then
+         TIO.Put_Line ("No joysticks connected! Exiting.");
+
+         return False;
+      else
+         TIO.Put_Line ("Found " &
+                     SDL.Inputs.Joysticks.Total'Image &
+                     " joysticks.");
+      end if;
+
+      --  Check if the first joystick is game controller compatible
+      if SDL.Inputs.Joysticks.Game_Controllers.Is_Game_Controller (1) = True then
+
+         TIO.Put_Line ("Joystick is game controller interface compatible.");
+
+         --  Open the game controller
+         SDL.Inputs.Joysticks.Game_Controllers.Makers.Create (1, Game_Controller);
+         declare
+            --  Get the joystick to then get the joystick instance
+            --  which is needed for the axis events
+            Joystick : constant SDL.Inputs.Joysticks.Joystick :=
+              SDL.Inputs.Joysticks.Game_Controllers.Get_Joystick (Game_Controller);
+         begin
+            Joystick_Instance := SDL.Inputs.Joysticks.Instance (Joystick);
+
+            TIO.Put_Line ("Joystick has" &
+                            SDL.Inputs.Joysticks.Axes (Joystick)'Image &
+                            " axes.");
+         end;
+
+         --  Check if it supports rumble
+         if SDL.Inputs.Joysticks.Game_Controllers.Has_Rumble (Game_Controller) then
+            TIO.Put_Line ("Joystick supports rumble.");
+         else
+            TIO.Put_Line ("Joystick does not support rumble.");
+         end if;
+      end if;
+
+      if not SDL.Images.Initialise (Flags => SDL.Images.Enable_PNG) then
+         return False;
+      end if;
+
+      SDL.Video.Windows.Makers.Create
+        (Win      => Window,
+         Title    => "SDL Tutorial - Force Feedback",
+         Position => SDL.Natural_Coordinates'(X => 20, Y => 20),
+         Size     => SDL.Positive_Sizes'(Width, Height),
+         Flags    => SDL.Video.Windows.Shown);
+
+      SDL.Video.Renderers.Makers.Create
+        (Window => Window,
+         Rend   => Renderer,
+         Flags  => SDL.Video.Renderers.Accelerated or
+           SDL.Video.Renderers.Present_V_Sync);
+
+      Renderer.Set_Draw_Colour ((others => 255));
+
+      return True;
+
+   end Initialise;
+
    procedure Load_Media
      (Texture   : in out SDL.Video.Textures.Texture;
       Renderer  : SDL.Video.Renderers.Renderer;
@@ -57,6 +133,21 @@ procedure Force_Feedback is
       Loaded_Surface.Finalize;
 
    end Load_Media;
+
+   procedure Free_Media is
+   begin
+      Splash_Texture.Finalize;
+   end Free_Media;
+
+   procedure Close is
+   begin
+      Free_Media;
+
+      SDL.Inputs.Joysticks.Game_Controllers.Close (Game_Controller);
+      Window.Finalize;
+      SDL.Images.Finalise;
+      SDL.Finalise;
+   end Close;
 
    procedure Render
      (Renderer         : in out SDL.Video.Renderers.Renderer;
@@ -182,81 +273,22 @@ procedure Force_Feedback is
    end Handle_Events;
 
 begin
-   if not SDL.Initialise (Flags => SDL.Enable_Screen
-                          or SDL.Enable_Joystick
-                          or SDL.Enable_Haptic
-                          or SDL.Enable_Game_Controller)
-   then
+   if not Force_Feedback.Initialise then
       return;
    end if;
-
-   SDL.Hints.Set (SDL.Hints.Render_Scale_Quality, "1");
-
-   --  Check for the presence of joysticks
-   if SDL.Inputs.Joysticks.Total < 1 then
-      Ada.Text_IO.Put_Line ("No joysticks connected! Exiting.");
-      return;
-   else
-      Ada.Text_IO.Put_Line ("Found " &
-                              SDL.Inputs.Joysticks.Total'Image &
-                           " joysticks.");
-   end if;
-
-   --  Check if the first joystick is game controller compatible
-   if SDL.Inputs.Joysticks.Game_Controllers.Is_Game_Controller (1) = True then
-
-      TIO.Put_Line ("Joystick is game controller interface compatible.");
-
-      --  Open the game controller
-      SDL.Inputs.Joysticks.Game_Controllers.Makers.Create (1, Game_Controller);
-      declare
-         --  Get the joystick to then get the joystick instance
-         --  which is needed for the axis events
-         Joystick : constant SDL.Inputs.Joysticks.Joystick :=
-                      SDL.Inputs.Joysticks.Game_Controllers.Get_Joystick (Game_Controller);
-      begin
-         Joystick_Instance := SDL.Inputs.Joysticks.Instance (Joystick);
-
-         TIO.Put_Line ("Joystick has" &
-                         SDL.Inputs.Joysticks.Axes (Joystick)'Image &
-                         " axes.");
-      end;
-
-      --  Check if it supports rumble
-      if SDL.Inputs.Joysticks.Game_Controllers.Has_Rumble (Game_Controller) then
-         TIO.Put_Line ("Joystick supports rumble.");
-      else
-         TIO.Put_Line ("Joystick does not support rumble.");
-      end if;
-   end if;
-
-   if not SDL.Images.Initialise (Flags => SDL.Images.Enable_PNG) then
-      return;
-   end if;
-
-   SDL.Video.Windows.Makers.Create
-     (Win      => Window,
-      Title    => "Force Feedback",
-      Position => SDL.Natural_Coordinates'(X => 20, Y => 20),
-      Size     => SDL.Positive_Sizes'(Width, Height),
-      Flags    => SDL.Video.Windows.Shown);
-
-   SDL.Video.Renderers.Makers.Create
-     (Window => Window,
-      Rend   => Renderer,
-      Flags  => SDL.Video.Renderers.Accelerated or
-        SDL.Video.Renderers.Present_V_Sync);
-
-   Renderer.Set_Draw_Colour ((others => 255));
 
    Load_Media (Splash_Texture, Renderer, "../resources/splash.png");
 
    Handle_Events;
 
-   SDL.Inputs.Joysticks.Game_Controllers.Close (Game_Controller);
-   Window.Finalize;
-   SDL.Images.Finalise;
-   SDL.Finalise;
+   Close;
 
-   Ada.Text_IO.Put_Line ("Process completed.");
+   TIO.Put_Line ("Process completed.");
+exception
+   when Event : others =>
+      TIO.Put_Line ("Process not completed.");
+      TIO.Put_Line ("Exception raised: " &
+                      Ada.Exceptions.Exception_Name (Event));
+      TIO.Put_Line ("Exception mesage: " &
+                      Ada.Exceptions.Exception_Message (Event));
 end Force_Feedback;
