@@ -51,7 +51,7 @@ procedure Circular_Collision_Detection is
 
       Windows.Makers.Create
         (Win      => Window,
-         Title    => "SDL Tutorial - Per-Pixel Collision Detection",
+         Title    => "SDL Tutorial - Circular Collision Detection",
          Position => SDL.Natural_Coordinates'(X => 20, Y => 20),
          Size     => Screen_Size,
          Flags    => 0);
@@ -161,11 +161,9 @@ begin
    Put_Line ("Process completed.");
 exception
    when Event : others =>
+      Put_Line ("Process not completed.");
       Put_Line ("Exception raised: " &
                   Ada.Exceptions.Exception_Name (Event));
       Put_Line ("Exception mesage: " &
                   Ada.Exceptions.Exception_Message (Event));
-      Put_Line ("Full exception information:");
-      Put_Line (Ada.Exceptions.Exception_Information (Event));
-      Put_Line ("Process not completed.");
 end Circular_Collision_Detection;

@@ -2,7 +2,7 @@ pragma Ada_2022;
 
 with Ada.Exceptions;
 with Ada.Strings.Fixed;
-with Ada.Text_IO;
+with Ada.Text_IO; use Ada.Text_IO;
 with Interfaces.C; use Interfaces.C;
 with SDL.Events.Events;
 with SDL.Events.Keyboards;
@@ -221,14 +221,12 @@ begin
 
    Close;
 
-   Ada.Text_IO.Put_Line ("Process completed.");
+   Put_Line ("Process completed.");
 exception
    when Event : others =>
-      Ada.Text_IO.Put_Line ("Exception raised: " &
-                              Ada.Exceptions.Exception_Name (Event));
-      Ada.Text_IO.Put_Line ("Exception mesage: " &
-                              Ada.Exceptions.Exception_Message (Event));
-      Ada.Text_IO.Put_Line ("Full exception information:");
-      Ada.Text_IO.Put_Line (Ada.Exceptions.Exception_Information (Event));
-      Ada.Text_IO.Put_Line ("Process not completed.");
+      Put_Line ("Process not completed.");
+      Put_Line ("Exception raised: " &
+                  Ada.Exceptions.Exception_Name (Event));
+      Put_Line ("Exception mesage: " &
+                  Ada.Exceptions.Exception_Message (Event));
 end Advanced_Timers;

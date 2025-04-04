@@ -146,11 +146,9 @@ begin
    Put_Line ("Process completed.");
 exception
    when Event : others =>
+      Put_Line ("Process not completed.");
       Put_Line ("Exception raised: " &
                   Ada.Exceptions.Exception_Name (Event));
       Put_Line ("Exception mesage: " &
                   Ada.Exceptions.Exception_Message (Event));
-      Put_Line ("Full exception information:");
-      Put_Line (Ada.Exceptions.Exception_Information (Event));
-      Put_Line ("Process not completed.");
 end Motion;

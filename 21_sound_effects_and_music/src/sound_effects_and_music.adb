@@ -1,7 +1,8 @@
 pragma Ada_2022;
 
+with Ada.Exceptions;
 with Ada.Strings.UTF_Encoding;
-with Ada.Text_IO;
+with Ada.Text_IO; use Ada.Text_IO;
 with SDL.Events.Events;
 with SDL.Events.Keyboards;
 with SDL.Hints;
@@ -37,6 +38,44 @@ procedure Sound_Effects_And_Music is
    Medium   : SDL.Mixer.Chunk_Type;
    Low      : SDL.Mixer.Chunk_Type;
 
+   function Initialise return Boolean is
+   begin
+      if not SDL.Initialise (SDL.Enable_Screen or SDL.Enable_Audio)
+      then
+         return False;
+      end if;
+
+      SDL.Hints.Set (SDL.Hints.Render_Scale_Quality, "1");
+
+      SDL.Video.Windows.Makers.Create
+        (Win      => Window,
+         Title    => "SDL Tutorial - Sound effects and Music",
+         Position => SDL.Natural_Coordinates'(X => 20, Y => 20),
+         Size     => SDL.Positive_Sizes'(Width, Height),
+         Flags    => SDL.Video.Windows.Shown);
+
+      SDL.Video.Renderers.Makers.Create
+        (Window => Window,
+         Rend   => Renderer,
+         Flags  => SDL.Video.Renderers.Accelerated or
+           SDL.Video.Renderers.Present_V_Sync);
+
+      Renderer.Set_Draw_Colour ((others => 255));
+
+      if not SDL.Images.Initialise (Flags => SDL.Images.Enable_PNG) then
+         return False;
+      end if;
+
+      SDL.Mixer.Open
+        (SDL.Mixer.Default_Frequency,
+         SDL.Mixer.Default_Format,
+         2,
+         2048);
+
+      return True;
+
+   end Initialise;
+
    procedure Load_Media is
 
       package UTF_Strings renames Ada.Strings.UTF_Encoding;
@@ -68,6 +107,25 @@ procedure Sound_Effects_And_Music is
       SDL.Mixer.Chunks.Load ("../resources/low.wav", Low);
    end Load_Media;
 
+   procedure Free_Media is
+   begin
+      SDL.Mixer.Chunks.Free (Low);
+      SDL.Mixer.Chunks.Free (Medium);
+      SDL.Mixer.Chunks.Free (High);
+      SDL.Mixer.Chunks.Free (Scratch);
+
+      SDL.Mixer.Music.Free (Music);
+   end Free_Media;
+
+   procedure Close is
+   begin
+      Free_Media;
+
+      Window.Finalize;
+      SDL.Images.Finalise;
+      SDL.Finalise;
+   end Close;
+
    procedure Render
      (Renderer         : in out SDL.Video.Renderers.Renderer;
       Texture          : in out SDL.Video.Textures.Texture;
@@ -91,16 +149,6 @@ procedure Sound_Effects_And_Music is
                      Center_Point,
                      Flip_Type);
    end Render;
-
-   procedure Free_Media is
-   begin
-      SDL.Mixer.Chunks.Free (Low);
-      SDL.Mixer.Chunks.Free (Medium);
-      SDL.Mixer.Chunks.Free (High);
-      SDL.Mixer.Chunks.Free (Scratch);
-
-      SDL.Mixer.Music.Free (Music);
-   end Free_Media;
 
    procedure Handle_Events is
       Finished : Boolean := False;
@@ -175,46 +223,22 @@ procedure Sound_Effects_And_Music is
    end Handle_Events;
 
 begin
-   if not SDL.Initialise (SDL.Enable_Screen or SDL.Enable_Audio)
-   then
+   if not Sound_Effects_And_Music.Initialise then
       return;
    end if;
-
-   SDL.Hints.Set (SDL.Hints.Render_Scale_Quality, "1");
-
-   SDL.Video.Windows.Makers.Create
-     (Win      => Window,
-      Title    => "SDL Tutorial - Sound effects and Music",
-      Position => SDL.Natural_Coordinates'(X => 20, Y => 20),
-      Size     => SDL.Positive_Sizes'(Width, Height),
-      Flags    => SDL.Video.Windows.Shown);
-
-   SDL.Video.Renderers.Makers.Create
-     (Window => Window,
-      Rend   => Renderer,
-      Flags  => SDL.Video.Renderers.Accelerated or
-        SDL.Video.Renderers.Present_V_Sync);
-
-   Renderer.Set_Draw_Colour ((others => 255));
-
-   if not SDL.Images.Initialise (Flags => SDL.Images.Enable_PNG) then
-      return;
-   end if;
-
-   SDL.Mixer.Open
-     (SDL.Mixer.Default_Frequency,
-      SDL.Mixer.Default_Format,
-      2,
-      2048);
 
    Load_Media;
 
    Handle_Events;
 
-   Free_Media;
-   Window.Finalize;
-   SDL.Images.Finalise;
-   SDL.Finalise;
+   Close;
 
-   Ada.Text_IO.Put_Line ("Process complete.");
+   Put_Line ("Process complete.");
+exception
+   when Event : others =>
+      Put_Line ("Process not completed.");
+      Put_Line ("Exception raised: " &
+                  Ada.Exceptions.Exception_Name (Event));
+      Put_Line ("Exception mesage: " &
+                  Ada.Exceptions.Exception_Message (Event));
 end Sound_Effects_And_Music;

@@ -1,4 +1,7 @@
-with Ada.Text_IO;
+pragma Ada_2022;
+
+with Ada.Exceptions;
+with Ada.Text_IO; use Ada.Text_IO;
 with Ada.Strings.Unbounded;
 with SDL.Clipboard;
 with SDL.Events.Events;
@@ -36,6 +39,36 @@ procedure Text_Input_And_Clipboard_Handling is
                            ASU.To_Unbounded_String ("Some Text");
    Render_Text : Boolean := False;
 
+   function Initialise return Boolean is
+   begin
+
+      if not SDL.Initialise (Flags => SDL.Enable_Screen) then
+         return False;
+      end if;
+
+      if not SDL.TTFs.Initialise then
+         return False;
+      end if;
+
+      SDL.Video.Windows.Makers.Create
+        (Win      => Window,
+         Title    => "SDL Tutorial - Text Input And Clipboard Handling",
+         Position => SDL.Natural_Coordinates'(X => 20, Y => 20),
+         Size     => SDL.Positive_Sizes'(Width, Height),
+         Flags    => 0);
+
+      SDL.Video.Renderers.Makers.Create
+        (Window => Window,
+         Rend   => Renderer,
+         Flags  => SDL.Video.Renderers.Accelerated or
+           SDL.Video.Renderers.Present_V_Sync);
+
+      SDL.TTFs.Makers.Create (Font, "../resources//lazy.ttf", 28);
+
+      return True;
+
+   end Initialise;
+
    procedure Load_From_Rendered_Text
      (Texture : in out SDL.Video.Textures.Texture;
       Text    : String;
@@ -55,6 +88,21 @@ procedure Text_Input_And_Clipboard_Handling is
       Load_From_Rendered_Text (Input_Text_Texture,
                                ASU.To_String (Input_Text), (others => 0));
    end Load_Media;
+
+   procedure Free_Media is
+   begin
+      Prompt_Texture.Finalize;
+      Input_Text_Texture.Finalize;
+   end Free_Media;
+
+   procedure Close is
+   begin
+      Free_Media;
+
+      SDL.TTFs.Quit;
+      Window.Finalize;
+      SDL.Finalise;
+   end Close;
 
    procedure Render (Renderer : in out SDL.Video.Renderers.Renderer;
                      Texture  : in out SDL.Video.Textures.Texture;
@@ -159,28 +207,9 @@ procedure Text_Input_And_Clipboard_Handling is
    end Handle_Events;
 
 begin
-   if not SDL.Initialise (Flags => SDL.Enable_Screen) then
+   if not Text_Input_And_Clipboard_Handling.Initialise then
       return;
    end if;
-
-   if not SDL.TTFs.Initialise then
-      return;
-   end if;
-
-   SDL.Video.Windows.Makers.Create
-     (Win      => Window,
-      Title    => "SDL Tutorial - Text Input And Clipboard Handling",
-      Position => SDL.Natural_Coordinates'(X => 20, Y => 20),
-      Size     => SDL.Positive_Sizes'(Width, Height),
-      Flags    => 0);
-
-   SDL.Video.Renderers.Makers.Create
-     (Window => Window,
-      Rend   => Renderer,
-      Flags  => SDL.Video.Renderers.Accelerated or
-        SDL.Video.Renderers.Present_V_Sync);
-
-   SDL.TTFs.Makers.Create (Font, "../resources//lazy.ttf", 28);
 
    Load_Media;
 
@@ -188,12 +217,16 @@ begin
 
    Handle_Events;
 
-      SDL.Inputs.Keyboards.Stop_Text_Input;
+   SDL.Inputs.Keyboards.Stop_Text_Input;
 
-   SDL.TTFs.Quit;
-   Window.Finalize;
-   SDL.Finalise;
+   Close;
 
-   Ada.Text_IO.Put_Line ("Process completed.");
-
+   Put_Line ("Process completed.");
+exception
+   when Event : others =>
+      Put_Line ("Process not completed.");
+      Put_Line ("Exception raised: " &
+                  Ada.Exceptions.Exception_Name (Event));
+      Put_Line ("Exception mesage: " &
+                  Ada.Exceptions.Exception_Message (Event));
 end Text_Input_And_Clipboard_Handling;
