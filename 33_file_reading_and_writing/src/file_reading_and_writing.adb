@@ -40,7 +40,7 @@ procedure File_Reading_And_Writing is
    Window         : SDL.Video.Windows.Window;
    Renderer       : SDL.Video.Renderers.Renderer;
    Event          : SDL.Events.Events.Events;
-   Prompt_Texture : SDL.Video.Textures.Texture;
+   Prompt_Texture : Textures.Texture;
    Font           : SDL.TTFs.Fonts;
 
    Text_Colour      : constant SDL.Video.Palettes.Colour := (others => 0);
@@ -74,14 +74,14 @@ procedure File_Reading_And_Writing is
    end Initialise;
 
    procedure Load_From_Rendered_Text
-     (Texture : in out SDL.Video.Textures.Texture;
+     (Texture : in out Textures.Texture;
       Text    : String;
       Colour  : SDL.Video.Palettes.Colour) is
       Text_Surface : SDL.Video.Surfaces.Surface;
    begin
       Text_Surface := Font.Render_Solid (Text, Colour);
 
-      SDL.Video.Textures.Makers.Create (Texture, Renderer, Text_Surface);
+      Textures.Makers.Create (Texture, Renderer, Text_Surface);
 
       Text_Surface.Finalize;
    end Load_From_Rendered_Text;
@@ -157,7 +157,7 @@ procedure File_Reading_And_Writing is
    end Close;
 
    procedure Render (Renderer : in out SDL.Video.Renderers.Renderer;
-                     Texture  : in out SDL.Video.Textures.Texture;
+                     Texture  : in out Textures.Texture;
                      X        : SDL.Dimension;
                      Y        : SDL.Dimension) is
       Render_Rectangle : constant SDL.Video.Rectangles.Rectangle :=
