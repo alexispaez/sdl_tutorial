@@ -1,5 +1,5 @@
 # The Lazy Foo' SDL2 tutorials implemented in Ada using sdlada
-I'm writing these tutorials as an exercise to learn Ada, how to create Ada bindings to external libraries and to learn SDL itself!
+I'm writing these tutorials as an exercise to learn Ada, how to create Ada bindings to external libraries and to learn SDL itself.
 
 The original Lazy Foo' tutorials can be found here: https://lazyfoo.net/tutorials/SDL/index.php.
 
