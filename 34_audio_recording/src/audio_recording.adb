@@ -26,7 +26,13 @@ procedure Audio_Recording is
    type Buffer_T is array (Positive range <>) of Interfaces.Unsigned_8;
    package Audio_Devices is new SDL.Audio.Devices (Frame_Type => Interfaces.Unsigned_8,
                                                    Buffer_Index => Positive,
-                                                   Buffer_Type => Buffer_T);
+                                                   Buffer_Type  => Buffer_T);
+   type Recording_State is (Selecting_Device,
+                            Stopped,
+                            Recording,
+                            Recorded,
+                            PlayBack,
+                            Error);
 
    Width  : constant := 640;
    Height : constant := 480;
@@ -105,9 +111,11 @@ procedure Audio_Recording is
          if Recording_Device_Count > Max_Recording_Devices then
             Recording_Device_Count := Max_Recording_Devices;
          end if;
-         for Index in 1 .. Recording_Device_Count loop
-            Load_From_Rendered_Text (Device_Textures (Index),
-                                     Index'Image & ": " & Audio_Devices.Get_Name (Index),
+
+         --  Start loop from 0 to start indexing the devices from 0 for the selection
+         for Index in 0 .. Recording_Device_Count - 1 loop
+            Load_From_Rendered_Text (Device_Textures (Index + 1),
+                                     Index'Image & ": " & Audio_Devices.Get_Name (Index + 1),
                                      Text_Colour);
          end loop;
 
@@ -153,8 +161,10 @@ procedure Audio_Recording is
    end Render;
 
    procedure Handle_Events is
-      Finished     : Boolean := False;
-
+      Finished      : Boolean := False;
+      Current_State : Recording_State := Selecting_Device;
+      subtype Number_Keys_Range is SDL.Events.Keyboards.Key_Codes range
+        SDL.Events.Keyboards.Code_0 .. SDL.Events.Keyboards.Code_9;
    begin
       loop
          while SDL.Events.Events.Poll (Event) loop
@@ -168,11 +178,36 @@ procedure Audio_Recording is
                      when SDL.Events.Keyboards.Code_Escape =>
                         Finished := True;
 
-                     when others => null;
+                     when others =>
+                        case Current_State is
+                           when Selecting_Device =>
+                              if Event.Keyboard.Key_Sym.Key_Code
+                              in Number_Keys_Range
+                              then
+                                 declare
+                                    Index : Natural :=
+                                              Natural (Event.Keyboard.Key_Sym.Key_Code) -
+                                              Natural (SDL.Events.Keyboards.Code_0);
+                                 begin
+                                    if Index < Recording_Device_Count then
+                                       Put_Line ("Do it for index: " &  Index'Image);
+                                    end if;
+                                 end;
+                              end if;
+                           when Stopped => null;
+                           when Recorded => null;
+                           when others => null;
+                        end case;
                   end case;
 
                when others => null;
             end case;
+
+            if Current_State = Recording then
+               null;
+            elsif Current_State = PlayBack then
+               null;
+            end if;
          end loop;
 
          --  Clear screen
@@ -209,11 +244,11 @@ begin
    Close;
 
    Put_Line ("Process completed.");
-exception
-   when Event : others =>
-      Put_Line ("Process not completed.");
-      Put_Line ("Exception raised: " &
-                  Ada.Exceptions.Exception_Name (Event));
-      Put_Line ("Exception mesage: " &
-                  Ada.Exceptions.Exception_Message (Event));
+--  exception
+--     when Event : others =>
+--        Put_Line ("Process not completed.");
+--        Put_Line ("Exception raised: " &
+--                    Ada.Exceptions.Exception_Name (Event));
+--        Put_Line ("Exception mesage: " &
+--                    Ada.Exceptions.Exception_Message (Event));
 end Audio_Recording;
